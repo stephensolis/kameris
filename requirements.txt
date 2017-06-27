@@ -1,0 +1,8 @@
+boto3
+numpy
+ruamel.yaml
+scikit-learn
+scipy
+six
+tqdm
+watchtower

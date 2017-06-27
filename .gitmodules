@@ -1,0 +1,3 @@
+[submodule "cpp-tmp-build/cpp"]
+	path = cpp-tmp-build/cpp
+	url = https://github.com/stephensolis/modmap-generator-cpp
