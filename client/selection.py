@@ -1,8 +1,10 @@
 from __future__ import absolute_import, division, unicode_literals
 
+import copy
 import json
 import os
 import re
+from six import iteritems
 from tqdm import tqdm
 import zipfile
 
@@ -15,7 +17,8 @@ from . import utils
 
 
 def run_selection(options, exp_options):
-    groups = exp_options['groups']
+    # because key 'dataset' (at least) may be added to a group's options
+    groups = copy.deepcopy(exp_options['groups'])
 
     # load selection functions
     selection_funcs = {}
@@ -30,8 +33,7 @@ def run_selection(options, exp_options):
     # run pick_group
     with utils.log_step('running pick_group'):
         selected_metadata = []
-        for group_name in groups:
-            group_options = groups[group_name]
+        for group_name, group_options in iteritems(groups):
             group_options['name'] = group_name
             if 'dataset' not in group_options:
                 group_options['dataset'] = exp_options['dataset']

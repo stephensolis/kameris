@@ -213,13 +213,12 @@ def run_experiment(options):
                     )
             except stopit.TimeoutException:
                 log.warning(
-                    "*** classifier run timed out after ~{} seconds, skipping"
-                    .format(timeout_seconds)
+                    '*** classifier run timed out after ~%d seconds, skipping',
+                    timeout_seconds
                 )
             except Exception as e:
                 log.warning(
-                    "*** classifier run failed with error '{}', skipping"
-                    .format(e)
+                    "*** classifier run failed with error '%s', skipping", e
                 )
 
     with open(options['output_file'], 'w') as outfile:

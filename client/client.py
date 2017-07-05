@@ -8,6 +8,7 @@ import itertools
 import json
 import logging
 import os
+import random
 from ruamel.yaml import YAML
 from six import iteritems
 from six.moves import range
@@ -39,7 +40,9 @@ def experiment_paths(local_dirs, job_name, exp_name):
         'output_dir': output_dir,
         'fasta_dir': os.path.join(output_dir, 'fasta'),
         'metadata_file': os.path.join(output_dir, 'metadata.json'),
-        'log_file': os.path.join(output_dir, 'log.txt')
+        'log_file': os.path.join(output_dir, 'log.txt'),
+        'experiment_rerun_file': os.path.join(output_dir,
+                                              'rerun_experiment.yml')
     }
 
 
@@ -56,9 +59,13 @@ def preprocess_experiments(experiments):
                                          for (option_key, option_val)
                                          in iteritems(dict(option_values)))
 
+    # handle expand_options
     final_experiments = collections.OrderedDict()
     for exp_name, exp_options in iteritems(experiments):
         if 'expand_options' in exp_options:
+            clean_exp_options = exp_options.copy()
+            clean_exp_options.pop('expand_options')
+
             expand_options = exp_options['expand_options']
             expand_option_values = itertools.product(*(
                 ((option_key, option_val)
@@ -69,7 +76,7 @@ def preprocess_experiments(experiments):
             for i, exp_option_values in enumerate(expand_option_values):
                 new_exp_name = exp_name_with_options(exp_name,
                                                      exp_option_values)
-                new_exp_options = dict(exp_option_values, **exp_options)
+                new_exp_options = dict(exp_option_values, **clean_exp_options)
                 if i == 0:
                     first_new_exp_name = new_exp_name
                 elif ('no_copy' not in expand_options or
@@ -168,8 +175,7 @@ def run_experiment_steps(steps, exp_options):
         if 'copy' in exp_options and (i in exp_options['copy']['skip'] or
                                       step_options['type'] in
                                       exp_options['copy']['skip']):
-            log.info("*** skipping {} because of 'copy' directive"
-                     .format(step_desc))
+            log.info("*** skipping %s because of 'copy' directive", step_desc)
             continue
 
         with utils.log_step(step_desc, start_stars=True):
@@ -243,6 +249,25 @@ def run_job(jobdesc_filename, settings_filename):
             file_logger = logging.FileHandler(paths['log_file'], mode='w')
             file_logger.setFormatter(formatter)
             log.addHandler(file_logger)
+
+            # seed the RNG
+            if 'random_seed' in job_options:
+                random_seed = job_options['random_seed']
+            else:
+                random_seed = random.getrandbits(32)
+            log.info('using random seed value %d', random_seed)
+            random.seed(random_seed)
+
+            # create a re-run file
+            with open(paths['experiment_rerun_file'], 'w') as rerun_file:
+                YAML().dump({
+                    'name': job_name,
+                    'random_seed': random_seed,
+                    'experiments': {
+                        exp_name: exp_options
+                    },
+                    'steps': steps
+                }, rerun_file)
 
             # copy files if requested
             if 'copy' in exp_options:
