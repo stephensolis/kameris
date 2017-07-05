@@ -4,5 +4,6 @@ ruamel.yaml
 scikit-learn
 scipy
 six
+stopit
 tqdm
 watchtower

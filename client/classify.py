@@ -22,6 +22,7 @@ import logging
 import numpy as np
 from six import iteritems
 from six.moves import range
+import stopit
 import timeit
 
 from . import file_formats
@@ -202,10 +203,18 @@ def run_experiment(options):
         with utils.log_step(
                  "classifier '{}' ({}/{})".format(classifier_name, i+1,
                                                   len(classifier_names))):
+            timeout_seconds = 600  # TODO: make this an options key?
             try:
-                results[classifier_name] = crossvalidation_run(
-                    classifiers[classifier_name], features, point_classes,
-                    validation_count, mode=features_mode
+                with stopit.ThreadingTimeout(seconds=timeout_seconds,
+                                             swallow_exc=False):
+                    results[classifier_name] = crossvalidation_run(
+                        classifiers[classifier_name], features, point_classes,
+                        validation_count, mode=features_mode
+                    )
+            except stopit.TimeoutException:
+                log.warning(
+                    "*** classifier run timed out after ~{} seconds, skipping"
+                    .format(timeout_seconds)
                 )
             except Exception as e:
                 log.warning(
