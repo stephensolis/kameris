@@ -267,7 +267,7 @@ def run_job(jobdesc_filename, settings_filename):
                     'experiments': {
                         exp_name: exp_options
                     },
-                    'steps': steps
+                    'steps': job_options['steps']
                 }, rerun_file)
 
             # copy files if requested
