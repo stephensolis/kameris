@@ -3,7 +3,7 @@
 (* plot settings *)
 
 colorScheme = {
-	Blue, Red, Green, Purple, Yellow
+	Blue, Red, Green, Magenta, Yellow, Orange, Darker@Green, Cyan, Brown
 };
 
 
