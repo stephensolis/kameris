@@ -68,9 +68,10 @@ def preprocess_experiments(experiments):
 
             expand_options = exp_options['expand_options']
             expand_option_values = itertools.product(*(
-                ((option_key, option_val)
-                 for option_val in inflate_option_vals(option_vals))
+                [(option_key, option_val)
+                 for option_val in inflate_option_vals(option_vals)]
                 for (option_key, option_vals) in iteritems(expand_options)
+                if option_key != 'no_copy'
             ))
 
             for i, exp_option_values in enumerate(expand_option_values):
