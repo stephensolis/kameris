@@ -8,7 +8,6 @@ from tqdm import tqdm
 import zipfile
 
 # these may be used by pick_group_fn/postprocess_fn
-import copy  # NOQA
 from six.moves import range  # NOQA
 
 from . import file_formats
@@ -34,7 +33,7 @@ def run_selection(options, exp_options):
             # fetch metadata
             all_metadata_filename = os.path.join(
                 options['metadata_dir'],
-                'metadata-{}.json'.format(group_options['dataset']['metadata'])
+                group_options['dataset']['metadata'] + '.json'
             )
             if all_metadata_filename in all_metadata_cache:
                 all_metadata = all_metadata_cache[all_metadata_filename]

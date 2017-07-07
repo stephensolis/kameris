@@ -38,8 +38,8 @@ def experiment_paths(local_dirs, job_name, exp_name):
         'archives_dir': local_dirs['archives'],
         'metadata_dir': local_dirs['metadata'],
         'output_dir': output_dir,
-        'fasta_dir': os.path.join(output_dir, 'fasta'),
-        'metadata_file': os.path.join(output_dir, 'metadata.json'),
+        'fasta_output_dir': os.path.join(output_dir, 'fasta'),
+        'metadata_output_file': os.path.join(output_dir, 'metadata.json'),
         'log_file': os.path.join(output_dir, 'log.txt'),
         'experiment_rerun_file': os.path.join(output_dir,
                                               'rerun_experiment.yml')
@@ -55,7 +55,7 @@ def preprocess_experiments(experiments):
             return option_vals
 
     def exp_name_with_options(exp_name, option_values):
-        return exp_name + '-' + '-'.join('{}{}'.format(option_key, option_val)
+        return exp_name + '-' + '-'.join('{}={}'.format(option_key, option_val)
                                          for (option_key, option_val)
                                          in iteritems(dict(option_values)))
 
@@ -125,20 +125,21 @@ def preprocess_steps(steps, paths, exp_options):
             ])
             step_options['archives_dir'] = paths['archives_dir']
             step_options['metadata_dir'] = paths['metadata_dir']
-            step_options['fasta_output_dir'] = paths['fasta_dir']
-            step_options['metadata_output_file'] = paths['metadata_file']
+            step_options['fasta_output_dir'] = paths['fasta_output_dir']
+            step_options['metadata_output_file'] = \
+                paths['metadata_output_file']
         elif step_options['type'] == 'command':
             do_option_substitutions(step_options, ['command'])
             make_output_paths(step_options, ['save_files'])
         elif step_options['type'] == 'mds':
             make_output_paths(step_options, ['dists_file', 'output_file'])
         elif step_options['type'] == 'classify':
-            step_options['metadata_file'] = paths['metadata_file']
+            step_options['metadata_file'] = paths['metadata_output_file']
             make_output_paths(step_options, ['features_file', 'output_file'])
         elif step_options['type'] == 'plots':
             step_options['plots_script'] = os.path.join(paths['client_dir'],
                                                         'make_plots.wls')
-            step_options['metadata_file'] = paths['metadata_file']
+            step_options['metadata_file'] = paths['metadata_output_file']
             make_output_paths(step_options, [
                 'mds_file', 'classification_file', 'output_file'
             ])
@@ -241,11 +242,16 @@ def run_job(jobdesc_filename, settings_filename):
         with utils.log_step("experiment '{}' ({}/{})"
                             .format(exp_name, i+1, len(experiments)),
                             start_stars=True):
+            exp_options = exp_options.copy()
             exp_options['experiment_name'] = exp_name
 
             # get ready
             paths = experiment_paths(local_dirs, job_name, exp_name)
             steps = preprocess_steps(job_options['steps'], paths, exp_options)
+            if isinstance(exp_options['groups'], str):
+                exp_options['groups'] = utils.call_string_extended_lambda(
+                    exp_options['groups'].format(**dict(exp_options, **paths))
+                )
             utils.mkdir_p(paths['output_dir'])
 
             # start file log
