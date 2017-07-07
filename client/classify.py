@@ -62,7 +62,8 @@ def classification_run(predictor_factory, features, point_classes,
 
     topN_results = {}
     for n in range(1, num_topN+1):
-        misclassified_indexes = [i for i in range(num_test_points) if
+        misclassified_indexes = [test_indexes[i] for i in
+                                 range(num_test_points) if
                                  test_realclasses[i] not in
                                  test_expclasses_ranked[i][:n]]
         topN_results['top{}'.format(n)] = {

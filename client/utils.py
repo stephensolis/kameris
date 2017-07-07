@@ -4,9 +4,20 @@ from __future__ import absolute_import, division, unicode_literals
 import contextlib
 import logging
 import os
+import re
 import timeit
 import shutil
 import subprocess
+
+
+lambda_str_cache = {}
+def call_string_extended_lambda(func_str, *args, **kwargs):  # NOQA
+    if func_str not in lambda_str_cache:
+        context = {}
+        exec(re.sub('^lambda (.*):', 'def func(\\1):', func_str), context)
+        lambda_str_cache[func_str] = context['func']
+
+    return lambda_str_cache[func_str](*args, **kwargs)
 
 
 # filesystem-related

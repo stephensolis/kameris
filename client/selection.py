@@ -3,7 +3,6 @@ from __future__ import absolute_import, division, unicode_literals
 import copy
 import json
 import os
-import re
 from six import iteritems
 from tqdm import tqdm
 import zipfile
@@ -18,16 +17,6 @@ from . import utils
 
 def run_selection(options, exp_options):
     groups = exp_options['groups'].copy()
-
-    # load selection functions
-    selection_funcs = {}
-    exec(re.sub('^lambda (.*):', 'def pick_group_fn(\\1):',
-                options['pick_group']),
-         selection_funcs)
-    if 'postprocess' in options:
-        exec(re.sub('^lambda (.*):', 'def postprocess_fn(\\1):',
-                    options['postprocess']),
-             selection_funcs)
 
     # run pick_group
     with utils.log_step('running pick_group'):
@@ -55,7 +44,8 @@ def run_selection(options, exp_options):
                 all_metadata_cache[all_metadata_filename] = all_metadata
 
             # perform selection
-            group_metadata = selection_funcs['pick_group_fn'](
+            group_metadata = utils.call_string_extended_lambda(
+                options['pick_group'],
                 copy.deepcopy(all_metadata),
                 copy.deepcopy(group_options)
             )
@@ -103,7 +93,8 @@ def run_selection(options, exp_options):
             # run postprocess if required
             if 'postprocess' in options:
                 new_metadata, sequences_list = zip(
-                    *selection_funcs['postprocess_fn'](
+                    *utils.call_string_extended_lambda(
+                        options['postprocess'],
                         copy.deepcopy(metadata_entry), file_sequences
                     )
                 )

@@ -206,7 +206,9 @@ def setup_logging(job_name, settings):
 
     if 'remote_logging' in settings:
         remote_log_settings = settings['remote_logging']
-        aws_session = boto3.session.Session(**make_aws_args(settings))
+        aws_session = boto3.session.Session(
+            **make_aws_args(remote_log_settings)
+        )
         log_stream_name = '{}-{}'.format(job_name, int(time.time()))
 
         log.info('*** logging to AWS CloudFront stream %s', log_stream_name)
