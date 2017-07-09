@@ -29,7 +29,7 @@ from . import file_formats
 from . import utils
 
 
-def classification_run(predictor_factory, features, point_classes,
+def classification_run(predictor_factory, features, point_classes, all_classes,
                        train_indexes, test_indexes):
     num_test_points = len(test_indexes)
     train_dists = features[train_indexes, :]
@@ -72,9 +72,9 @@ def classification_run(predictor_factory, features, point_classes,
         }
 
     stats = {
-        'classes': predictor.classes_,
-        'confusion_matrix': sklearn.metrics.confusion_matrix(test_realclasses,
-                                                             test_expclasses),
+        'confusion_matrix': sklearn.metrics.confusion_matrix(
+            test_realclasses, test_expclasses, labels=all_classes
+        ),
         'topN_results': topN_results,
         'train_time': train_end_time - start_time,
         'test_time': test_end_time - train_end_time
@@ -85,7 +85,7 @@ def classification_run(predictor_factory, features, point_classes,
 
 
 def crossvalidation_run(predictor_factory, features, point_classes,
-                        validation_count, mode='features'):
+                        all_classes, validation_count, mode='features'):
     num_points = len(point_classes)
     validation_indexes = np.array_split(np.random.permutation(num_points),
                                         validation_count)
@@ -105,9 +105,9 @@ def crossvalidation_run(predictor_factory, features, point_classes,
             real_features = features
 
         stats = classification_run(predictor_factory, real_features,
-                                   point_classes, train_indexes, test_indexes)
+                                   point_classes, all_classes, train_indexes,
+                                   test_indexes)
 
-        totals['classes'] = stats['classes']
         totals['confusion_matrix'] += stats['confusion_matrix']
         totals['train_time'] += stats['train_time']
         totals['test_time'] += stats['test_time']
@@ -120,7 +120,7 @@ def crossvalidation_run(predictor_factory, features, point_classes,
             )
 
     final_stats = {
-        'classes': totals['classes'],
+        'classes': all_classes,
         'confusion_matrix': totals['confusion_matrix'],
         'train_time': totals['train_time'] / validation_count,
         'test_time': totals['test_time'] / validation_count
@@ -192,7 +192,8 @@ def run_experiment(options):
 
     with open(options['metadata_file'], 'r') as infile:
         metadata = json.load(infile)
-        point_classes = np.array([x['group'] for x in metadata])
+    point_classes = np.array([x['group'] for x in metadata])
+    all_classes = sorted(set(x['group'] for x in metadata))
 
     if options['validation_count'] == 'one-out':
         validation_count = len(metadata)
@@ -210,7 +211,7 @@ def run_experiment(options):
                                              swallow_exc=False):
                     results[classifier_name] = crossvalidation_run(
                         classifiers[classifier_name], features, point_classes,
-                        validation_count, mode=features_mode
+                        all_classes, validation_count, mode=features_mode
                     )
             except stopit.TimeoutException:
                 log.warning(
