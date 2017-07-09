@@ -5,6 +5,7 @@
 This is a fast and user-friendly generation and analysis pipeline for Molecular Distance Maps.
 
 It uses:
+
 - [stephensolis/modmap-generator-cpp](https://github.com/stephensolis/modmap-generator-cpp) to generate DNA sequence representations and distance matrices
 - [scikit-learn](http://scikit-learn.org) for supervised classification experiments
 - [Wolfram Mathematica](https://www.wolfram.com/mathematica/) and code based on [stephensolis/modmap-generator](https://github.com/stephensolis/modmap-generator) to generate interactive plots

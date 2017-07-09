@@ -75,19 +75,28 @@ def run_selection(options, exp_options):
                 archive = zipfile.ZipFile(archive_filename)
                 archive_cache[archive_filename] = archive
 
-            # find path for file in archive
-            if 'filename' in metadata_entry:
-                filename = metadata_entry['filename']
+            # fetch sequences
+            if 'filenames' in metadata_entry and 'postprocess' in options:
+                file_sequences = [
+                    file_formats.read_fasta(archive.open(filename))
+                    for filename in metadata_entry['filenames']
+                ]
             else:
-                filename = metadata_entry['id'] + '.fasta'
-                if 'archive_folder' in group_options['dataset']:
-                    filename = '{}/{}'.format(
-                        group_options['dataset']['archive_folder'], filename
-                    )
+                # find path for file in archive
+                if 'filename' in metadata_entry:
+                    filename = metadata_entry['filename']
+                else:
+                    filename = metadata_entry['id'] + '.fasta'
+                    if 'archive_folder' in group_options['dataset']:
+                        filename = '{}/{}'.format(
+                            group_options['dataset']['archive_folder'],
+                            filename
+                        )
 
-            # read file
-            sequence_file = archive.open(filename)
-            file_sequences = file_formats.read_fasta(sequence_file)
+                # read file
+                file_sequences = file_formats.read_fasta(
+                    archive.open(filename)
+                )
 
             # run postprocess if required
             if 'postprocess' in options:
