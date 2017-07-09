@@ -10,6 +10,7 @@ import logging
 import os
 import random
 from ruamel.yaml import YAML
+import six
 from six import iteritems
 from six.moves import range
 import sys
@@ -48,7 +49,7 @@ def experiment_paths(local_dirs, job_name, exp_name):
 
 def preprocess_experiments(experiments):
     def inflate_option_vals(option_vals):
-        if isinstance(option_vals, str):
+        if isinstance(option_vals, six.string_types):
             [start, end] = option_vals.split('..')
             return range(int(start), int(end)+1)
         else:
@@ -190,10 +191,12 @@ def run_experiment_steps(steps, exp_options):
             elif step_options['type'] == 'classify':
                 classify.run_experiment(step_options)
             elif step_options['type'] == 'plots':
-                utils.run_command_logged([
-                    'wolframscript', step_options['plots_script'],
-                    base64.b64encode(json.dumps(step_options))
-                ])
+                utils.run_command_logged(
+                    'wolframscript "{}" {}'.format(
+                        step_options['plots_script'],
+                        base64.b64encode(json.dumps(step_options))
+                    )
+                )
 
 
 def setup_logging(job_name, settings):
@@ -234,7 +237,13 @@ def run_job(jobdesc_filename, settings_filename):
 
     local_dirs = settings['local_dirs']
     job_name = job_options['name']
-    experiments = preprocess_experiments(job_options['experiments'])
+
+    experiments = job_options['experiments']
+    if isinstance(experiments, six.string_types):
+        experiments = utils.call_string_extended_lambda(
+            experiments.format(**experiment_paths(local_dirs, job_name, ''))
+        )
+    experiments = preprocess_experiments(experiments)
 
     log, formatter = setup_logging(job_name, settings)
 
@@ -248,7 +257,7 @@ def run_job(jobdesc_filename, settings_filename):
             # get ready
             paths = experiment_paths(local_dirs, job_name, exp_name)
             steps = preprocess_steps(job_options['steps'], paths, exp_options)
-            if isinstance(exp_options['groups'], str):
+            if isinstance(exp_options['groups'], six.string_types):
                 exp_options['groups'] = utils.call_string_extended_lambda(
                     exp_options['groups'].format(**dict(exp_options, **paths))
                 )

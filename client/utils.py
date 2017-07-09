@@ -32,9 +32,11 @@ def mkdir_p(dir):
 def symlink(src, dest):
     if os.name == 'nt':
         if os.path.isdir(src):
-            subprocess.check_output(['mklink', '/d', dest, src], shell=True)
+            subprocess.check_output('mklink /d "{}" "{}"'.format(dest, src),
+                                    shell=True)
         else:
-            subprocess.check_output(['mklink', dest, src], shell=True)
+            subprocess.check_output('mklink "{}" "{}"'.format(dest, src),
+                                    shell=True)
     else:
         os.symlink(src, dest)
 
