@@ -1,12 +1,13 @@
 from __future__ import absolute_import, division, unicode_literals
 
-import numpy as np
 import logging
+import numpy as np
+import re
 
 
 # FASTA
 
-def read_fasta(infile):
+def read_fasta(infile, include_other_letters=False):
     sequences = []
 
     currseq = []
@@ -19,6 +20,8 @@ def read_fasta(infile):
                 sequences.append(''.join(currseq))
                 currseq = []
         else:
+            if not include_other_letters:
+                line = re.sub('[^ACGT]', '', line)
             currseq.append(line)
     if currseq:
         sequences.append(''.join(currseq))
