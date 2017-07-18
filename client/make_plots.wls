@@ -143,3 +143,6 @@ plots = {
 };
 
 Export["output_file" /. settings, Notebook[Cell@*BoxForm@*MakeBoxes /@ plots], "NB"];
+If[MemberQ[Keys[settings], "svg_output_file"],
+	Export["svg_output_file" /. settings, plots[[1]], "SVG"];
+];

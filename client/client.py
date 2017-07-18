@@ -195,7 +195,8 @@ def run_experiment_steps(steps, exp_options):
                     'wolframscript "{}" {}'.format(
                         step_options['plots_script'],
                         base64.b64encode(json.dumps(step_options))
-                    )
+                    ),
+                    shell=True
                 )
 
 

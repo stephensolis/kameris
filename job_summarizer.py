@@ -13,6 +13,10 @@ all_classifiers = {
 accuracy_key = 'top1'
 
 
+def accuracy_for_classifier(classifier_results):
+    return classifier_results[accuracy_key]['accuracy']*100
+
+
 def natural_sort_key(string):
     """See http://www.codinghorror.com/blog/archives/001018.html"""
     return [int(s) if s.isdigit() else s for s in re.split(r'(\d+)', string)]
@@ -20,6 +24,7 @@ def natural_sort_key(string):
 
 if __name__ == '__main__':
     import base64
+    from client import utils
     import collections
     import json
     import os
@@ -75,7 +80,7 @@ if __name__ == '__main__':
             for dist_name, results in iteritems(dist_results):
                 for classifier, classifier_results in iteritems(results):
                     curr_stats['classifier_counts'][classifier] += 1
-                    accuracy = classifier_results[accuracy_key]['accuracy']*100
+                    accuracy = accuracy_for_classifier(classifier_results)
 
                     if (accuracy > curr_stats['best_classifier']['accuracy'] or
                         (accuracy == curr_stats['best_classifier']['accuracy']
@@ -101,8 +106,9 @@ if __name__ == '__main__':
 
                         curr_stats['best_k_classifiers'] = {
                             curr_dist: {
-                                curr_classifier:
-                                    curr_classifier_results[accuracy_key]['accuracy']*100
+                                curr_classifier: accuracy_for_classifier(
+                                    curr_classifier_results
+                                )
                                 for curr_classifier, curr_classifier_results
                                 in iteritems(curr_results)
                             }
@@ -110,7 +116,8 @@ if __name__ == '__main__':
                             in iteritems(dist_results)
                         }
 
-                    best_by_k_stats = curr_stats['best_classifier_by_k'][dist_name]
+                    best_by_k_stats = \
+                        curr_stats['best_classifier_by_k'][dist_name]
                     if accuracy > best_by_k_stats[run_k]['accuracy']:
                         best_by_k_stats[run_k] = {
                             'accuracy': accuracy,
@@ -182,9 +189,13 @@ if __name__ == '__main__':
         ))
         print()
 
-        if len(sys.argv) == 3:
+        if len(sys.argv) == 3 and len(curr_stats['classes']) <= 9:
+            base_output_path = os.path.join(
+                sys.argv[2], os.path.basename(sys.argv[1])
+            )
+            utils.mkdir_p(base_output_path)
             base_output_filename = os.path.join(
-                sys.argv[2],
+                base_output_path,
                 '{}-k={k}-{dist}-{classifier}'.format(exp_name, **best_stats)
             )
             subprocess.call(
@@ -198,9 +209,11 @@ if __name__ == '__main__':
                         'classification_file':
                             best_stats['classification_file'],
                         'mds_file': best_stats['mds_file'],
-                        'output_file': base_output_filename + '-plots.nb'
+                        'output_file': base_output_filename + '-plots.nb',
+                        'svg_output_file': base_output_filename + '-plot2d.svg'
                     }))
-                )
+                ),
+                shell=True
             )
 
         print('='*80)
