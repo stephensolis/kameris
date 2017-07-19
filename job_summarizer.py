@@ -10,7 +10,8 @@ all_classifiers = {
     'logistic-regression', 'nearest-centroid-mean',
     'nearest-centroid-median'
 }
-accuracy_key = 'top1'
+accuracy_topN = 1
+accuracy_key = 'top' + str(accuracy_topN)
 
 
 def accuracy_for_classifier(classifier_results):
@@ -41,93 +42,100 @@ if __name__ == '__main__':
 
     for run_name in os.listdir(sys.argv[1]):
         curr_path = os.path.join(sys.argv[1], run_name)
-        if os.path.isdir(curr_path):
-            base_run_name = re.sub('-k=[0-9]+', '', run_name)
-            run_k = int(re.search('-k=([0-9]+)', run_name).group(1))
+        if not os.path.isdir(curr_path):
+            continue
 
-            if base_run_name not in run_stats:
-                with open(os.path.join(curr_path, 'metadata.json')) as f:
-                    metadata = json.load(f)
-                    groups = (x['group'] for x in metadata)
+        base_run_name = re.sub('-k=[0-9]+', '', run_name)
+        run_k = int(re.search('-k=([0-9]+)', run_name).group(1))
 
-                dists = [filename[15:-5]
-                         for filename in os.listdir(curr_path)
-                         if filename.startswith('classification-')
-                         and filename.endswith('.json')
-                         and os.path.isfile(os.path.join(curr_path, filename))]
+        if base_run_name not in run_stats:
+            with open(os.path.join(curr_path, 'metadata.json')) as f:
+                metadata = json.load(f)
+                groups = (x['group'] for x in metadata)
 
-                run_stats[base_run_name] = {
-                    'classes': collections.Counter(groups),
-                    'dists': dists,
-                    'classifier_counts': collections.defaultdict(int),
-                    'ks': set(),
-                    'best_classifier': {'accuracy': 0},
-                    'best_classifier_by_k': {
-                        dist: collections.defaultdict(lambda: {'accuracy': 0})
-                        for dist in dists
-                    }
+            dists = [filename[15:-5]
+                     for filename in os.listdir(curr_path)
+                     if filename.startswith('classification-')
+                     and filename.endswith('.json')
+                     and os.path.isfile(os.path.join(curr_path, filename))]
+
+            run_stats[base_run_name] = {
+                'classes': collections.Counter(groups),
+                'dists': dists,
+                'classifier_counts': collections.defaultdict(int),
+                'ks': set(),
+                'best_classifier': {'accuracy': 0},
+                'best_classifier_by_k': {
+                    dist: collections.defaultdict(lambda: {'accuracy': 0})
+                    for dist in dists
                 }
+            }
 
-            curr_stats = run_stats[base_run_name]
-            curr_stats['ks'].add(run_k)
+        curr_stats = run_stats[base_run_name]
+        curr_stats['ks'].add(run_k)
 
-            dist_results = {}
-            for dist_name in curr_stats['dists']:
-                with open(os.path.join(curr_path, 'classification-{}.json'
-                                                  .format(dist_name))) as f:
-                    dist_results[dist_name] = json.load(f)
+        dist_results = {}
+        for dist_name in curr_stats['dists']:
+            with open(os.path.join(curr_path, 'classification-{}.json'
+                                              .format(dist_name))) as f:
+                dist_results[dist_name] = json.load(f)
 
-            for dist_name, results in iteritems(dist_results):
-                for classifier, classifier_results in iteritems(results):
-                    curr_stats['classifier_counts'][classifier] += 1
-                    accuracy = accuracy_for_classifier(classifier_results)
+        for dist_name, results in iteritems(dist_results):
+            for classifier, classifier_results in iteritems(results):
+                if accuracy_key not in classifier_results:
+                    continue
 
-                    if (accuracy > curr_stats['best_classifier']['accuracy'] or
-                        (accuracy == curr_stats['best_classifier']['accuracy']
-                         and run_k < curr_stats['best_classifier']['k'])):
-                        curr_stats['best_classifier'] = {
-                            'accuracy': accuracy,
-                            'confusion_matrix':
-                                classifier_results['confusion_matrix'],
+                curr_stats['classifier_counts'][classifier] += 1
+                accuracy = accuracy_for_classifier(classifier_results)
 
-                            'class_order': classifier_results['classes'],
-                            'dist': dist_name,
-                            'k': run_k,
-                            'classifier': classifier,
+                if (accuracy > curr_stats['best_classifier']['accuracy'] or
+                    (accuracy == curr_stats['best_classifier']['accuracy']
+                     and run_k < curr_stats['best_classifier']['k'])):
+                    curr_stats['best_classifier'] = {
+                        'accuracy': accuracy,
+                        'confusion_matrix':
+                            classifier_results['confusion_matrix'],
 
-                            'metadata_file': os.path.join(
-                                curr_path, 'metadata.json'),
-                            'classification_file': os.path.join(
-                                curr_path,
-                                'classification-{}.json'.format(dist_name)),
-                            'mds_file': os.path.join(
-                                curr_path, 'mds10-{}.json'.format(dist_name))
+                        'class_order': classifier_results['classes'],
+                        'dist': dist_name,
+                        'k': run_k,
+                        'classifier': classifier,
+
+                        'metadata_file': os.path.join(
+                            curr_path, 'metadata.json'),
+                        'classification_file': os.path.join(
+                            curr_path,
+                            'classification-{}.json'.format(dist_name)),
+                        'mds_file': os.path.join(
+                            curr_path, 'mds10-{}.json'.format(dist_name))
+                    }
+
+                    curr_stats['best_k_classifiers'] = {
+                        curr_dist: {
+                            curr_classifier: accuracy_for_classifier(
+                                curr_classifier_results
+                            )
+                            for curr_classifier, curr_classifier_results
+                            in iteritems(curr_results)
+                            if accuracy_key in curr_classifier_results
                         }
+                        for curr_dist, curr_results
+                        in iteritems(dist_results)
+                    }
 
-                        curr_stats['best_k_classifiers'] = {
-                            curr_dist: {
-                                curr_classifier: accuracy_for_classifier(
-                                    curr_classifier_results
-                                )
-                                for curr_classifier, curr_classifier_results
-                                in iteritems(curr_results)
-                            }
-                            for curr_dist, curr_results
-                            in iteritems(dist_results)
-                        }
-
-                    best_by_k_stats = \
-                        curr_stats['best_classifier_by_k'][dist_name]
-                    if accuracy > best_by_k_stats[run_k]['accuracy']:
-                        best_by_k_stats[run_k] = {
-                            'accuracy': accuracy,
-                            'classifier': classifier
-                        }
+                best_by_k_stats = curr_stats['best_classifier_by_k'][dist_name]
+                if accuracy > best_by_k_stats[run_k]['accuracy']:
+                    best_by_k_stats[run_k] = {
+                        'accuracy': accuracy,
+                        'classifier': classifier
+                    }
 
     exp_names = sorted(run_stats.keys(), key=natural_sort_key)
     for exp_name in exp_names:
         curr_stats = run_stats[exp_name]
         best_stats = curr_stats['best_classifier']
+        if len(curr_stats['classes']) <= accuracy_topN:
+            continue
 
         print()
         print('Experiment:', exp_name)
@@ -164,8 +172,10 @@ if __name__ == '__main__':
         print('Best classifier by k:')
         print(tabulate.tabulate(
             [[k] + [val for dist_name in curr_stats['dists']
-                    for val in [best_by_k[dist_name][k]['accuracy'],
-                                best_by_k[dist_name][k]['classifier']]]
+                    for val in ([best_by_k[dist_name][k]['accuracy'],
+                                 best_by_k[dist_name][k]['classifier']]
+                                if 'classifier' in best_by_k[dist_name][k]
+                                else ['N/A', 'N/A'])]
              for k in curr_stats['ks']],
             ['k'] + [header for dist_name in curr_stats['dists']
                      for header in [dist_name + '-accuracy',
@@ -224,7 +234,8 @@ if __name__ == '__main__':
         [[exp_name, run_stats[exp_name]['best_classifier']['accuracy'],
           'k={k}, {dist}, {classifier}'
           .format(**run_stats[exp_name]['best_classifier'])]
-         for exp_name in exp_names],
+         for exp_name in exp_names
+         if len(run_stats[exp_name]['classes']) > accuracy_topN],
         ['experiment', 'best accuracy', 'run info'],
         floatfmt='.2f'
     ))
