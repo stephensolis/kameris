@@ -146,3 +146,6 @@ Export["output_file" /. settings, Notebook[Cell@*BoxForm@*MakeBoxes /@ plots], "
 If[MemberQ[Keys[settings], "svg_output_file"],
 	Export["svg_output_file" /. settings, plots[[1]], "SVG"];
 ];
+If[MemberQ[Keys[settings], "png_output_file"],
+	Export["png_output_file" /. settings, plots[[1]], "PNG", ImageResolution->300];
+];

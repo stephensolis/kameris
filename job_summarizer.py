@@ -35,7 +35,8 @@ if __name__ == '__main__':
     import tabulate
 
     if len(sys.argv) < 2 or len(sys.argv) > 3:
-        print('usage: job_summarizer.py <job directory> (<output directory>)')
+        print('usage: job_summarizer.py <job directory>'
+              ' (<base plot output directory>)')
         sys.exit(1)
 
     run_stats = {}
@@ -220,7 +221,10 @@ if __name__ == '__main__':
                             best_stats['classification_file'],
                         'mds_file': best_stats['mds_file'],
                         'output_file': base_output_filename + '-plots.nb',
-                        'svg_output_file': base_output_filename + '-plot2d.svg'
+                        'svg_output_file':
+                            base_output_filename + '-plot2d.svg',
+                        'png_output_file':
+                            base_output_filename + '-plot2d.png'
                     }))
                 ),
                 shell=True
