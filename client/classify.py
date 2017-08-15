@@ -6,14 +6,16 @@ from sklearn.neighbors.nearest_centroid import NearestCentroid
 from sklearn.svm import SVC
 
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
-from sklearn.gaussian_process import GaussianProcessClassifier
+# from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.naive_bayes import GaussianNB, MultinomialNB
+from sklearn.naive_bayes import GaussianNB  # , MultinomialNB
 from sklearn.discriminant_analysis import (
     LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis)
 
 from sklearn.neural_network import MLPClassifier
 
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
 import sklearn.metrics
 
 from collections import defaultdict
@@ -30,20 +32,33 @@ from . import utils
 
 
 def classification_run(predictor_factory, features, point_classes, all_classes,
-                       train_indexes, test_indexes):
+                       train_indexes, test_indexes, normalize_features=True):
+    num_train_points = len(train_indexes)
     num_test_points = len(test_indexes)
-    train_dists = features[train_indexes, :]
+    train_features = features[train_indexes, :]
     train_classes = point_classes[train_indexes]
-    test_dists = features[test_indexes, :]
+    test_features = features[test_indexes, :]
     test_realclasses = point_classes[test_indexes]
+
+    if normalize_features:
+        # scale each feature dimension to 0 mean and unit variance
+        normalizer = StandardScaler()
+        train_features = normalizer.fit_transform(train_features)
+        test_features = normalizer.transform(test_features)
+
+        # reduce dimensionality to 1/10 of its original
+        # TODO: make this adjustable
+        dim_reducer = PCA(n_components=int(np.ceil(num_train_points/10)))
+        train_features = dim_reducer.fit_transform(train_features)
+        test_features = dim_reducer.transform(test_features)
 
     predictor = predictor_factory()
     start_time = timeit.default_timer()
-    predictor.fit(train_dists, train_classes)
+    predictor.fit(train_features, train_classes)
     train_end_time = timeit.default_timer()
 
     if hasattr(predictor, 'predict_proba'):
-        test_expprobs = predictor.predict_proba(test_dists)
+        test_expprobs = predictor.predict_proba(test_features)
         test_end_time = timeit.default_timer()
 
         num_topN = len(predictor.classes_) - 1
@@ -54,7 +69,7 @@ def classification_run(predictor_factory, features, point_classes, all_classes,
                                   for i in range(num_test_points)]
         test_expclasses = [c[0] for c in test_expclasses_ranked]
     else:
-        test_expclasses = predictor.predict(test_dists)
+        test_expclasses = predictor.predict(test_features)
         test_end_time = timeit.default_timer()
 
         num_topN = 1
@@ -81,11 +96,15 @@ def classification_run(predictor_factory, features, point_classes, all_classes,
     }
     if hasattr(predictor, 'n_iter_'):
         stats['iterations'] = predictor.n_iter_
+    if normalize_features:
+        stats['reduced_variance_ratio'] = \
+            np.sum(dim_reducer.explained_variance_ratio_)
     return stats
 
 
 def crossvalidation_run(predictor_factory, features, point_classes,
-                        all_classes, validation_count, mode='features'):
+                        all_classes, validation_count, mode='features',
+                        normalize_features=True):
     num_points = len(point_classes)
     validation_indexes = np.array_split(np.random.permutation(num_points),
                                         validation_count)
@@ -113,6 +132,8 @@ def crossvalidation_run(predictor_factory, features, point_classes,
         totals['test_time'] += stats['test_time']
         if 'iterations' in stats:
             totals['iterations'] += stats['iterations']
+        if 'reduced_variance_ratio' in stats:
+            totals['reduced_variance_ratio'] += stats['reduced_variance_ratio']
         for name, results in iteritems(stats['topN_results']):
             topN_totals[name]['accuracy'] += results['accuracy']
             topN_totals[name]['misclassified_indexes'].update(
@@ -129,6 +150,10 @@ def crossvalidation_run(predictor_factory, features, point_classes,
         final_stats['average_iterations'] = (
             totals['iterations'] / validation_count
         )
+    if 'reduced_variance_ratio' in totals:
+        final_stats['average_reduced_variance_ratio'] = (
+            totals['reduced_variance_ratio'] / validation_count
+        )
     for name, curr_totals in iteritems(topN_totals):
         final_stats[name] = {
             'accuracy': curr_totals['accuracy'] / validation_count,
@@ -144,18 +169,20 @@ classifiers = {
     'nearest-centroid-median': lambda: NearestCentroid(metric='manhattan'),
     'logistic-regression': lambda: LogisticRegression(),
     'sgd': lambda: SGDClassifier(),
-    'linear-svm': lambda: SVC(kernel='linear', C=0.025),
-    'quadratic-svm': lambda: SVC(kernel='poly', degree=2, C=0.025),
-    'rbf-svm': lambda: SVC(C=0.025),
-    'gaussian-process': lambda: GaussianProcessClassifier(),
+    'linear-svm': lambda: SVC(kernel='linear'),
+    'quadratic-svm': lambda: SVC(kernel='poly', degree=2),
+    'rbf-svm': lambda: SVC(),
+    # 'gaussian-process': lambda: GaussianProcessClassifier(),
+    #   *really* slow (and docs say O(n^3))
     'decision-tree': lambda: DecisionTreeClassifier(),
     'random-forest': lambda: RandomForestClassifier(),
     'adaboost': lambda: AdaBoostClassifier(),
     'gaussian-naive-bayes': lambda: GaussianNB(),
-    'multinomial-naive-bayes': lambda: MultinomialNB(),
+    # 'multinomial-naive-bayes': lambda: MultinomialNB(),
+    #   always gives strange errors
     'lda': lambda: LinearDiscriminantAnalysis(),
     'qda': lambda: QuadraticDiscriminantAnalysis(),
-    'neural-network': lambda: MLPClassifier()
+    'multilayer-perceptron': lambda: MLPClassifier()
 }
 
 
@@ -200,6 +227,11 @@ def run_experiment(options):
     else:
         validation_count = options['validation_count']
 
+    if 'skip_normalization' not in options:
+        normalize_features = True
+    else:
+        normalize_features = not options['skip_normalization']
+
     results = {}
     for i, classifier_name in enumerate(classifier_names):
         with utils.log_step(
@@ -211,7 +243,8 @@ def run_experiment(options):
                                              swallow_exc=False):
                     results[classifier_name] = crossvalidation_run(
                         classifiers[classifier_name], features, point_classes,
-                        all_classes, validation_count, mode=features_mode
+                        all_classes, validation_count, mode=features_mode,
+                        normalize_features=normalize_features
                     )
             except stopit.TimeoutException:
                 log.warning(
