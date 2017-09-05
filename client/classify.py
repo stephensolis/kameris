@@ -209,8 +209,8 @@ def run_experiment(options):
     if options['features_type'] == 'mmg-dists':
         features = file_formats.import_dists(options['features_file'])
         features_mode = 'dists'
-    elif options['features_type'] == 'mmg-repr':
-        features = file_formats.import_repr(options['features_file'])
+    elif options['features_type'] == 'mmg-cgrs':
+        features = file_formats.import_cgrs(options['features_file'])
         features_mode = 'features'
     elif options['features_type'] == 'json-features':
         with open(options['features_file'], 'r') as infile:

@@ -61,6 +61,25 @@ def import_dists(filename):
 
     dists = np.fromfile(filename, dtype=np.dtype(dtype_str))
     dists_len = int(np.sqrt(dists.size))
-    dists = np.reshape(dists, (dists_len, dists_len))
 
-    return dists
+    return np.reshape(dists, (dists_len, dists_len))
+
+
+# binary CGRs
+
+def read_cgrs(infile):
+    [cgr_dtype] = np.fromfile(infile, dtype=np.dtype('<u1'), count=1)
+    if cgr_dtype == 16:
+        dtype_str = '<u2'
+    elif cgr_dtype == 32:
+        dtype_str = '<u4'
+
+    [num_cgrs] = np.fromfile(infile, dtype=np.dtype('<u8'), count=1)
+    cgrs = np.fromfile(infile, dtype=np.dtype(dtype_str))
+
+    return np.reshape(cgrs, (num_cgrs, int(len(cgrs) / num_cgrs)))
+
+
+def import_cgrs(filename):
+    with open(filename, 'r') as infile:
+        return read_cgrs(infile)
