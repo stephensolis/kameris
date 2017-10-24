@@ -81,5 +81,5 @@ def read_cgrs(infile):
 
 
 def import_cgrs(filename):
-    with open(filename, 'r') as infile:
+    with open(filename, 'rb') as infile:
         return read_cgrs(infile)

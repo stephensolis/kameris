@@ -33,7 +33,7 @@ from . import utils
 
 def classification_run(predictor_factory, features, point_classes, all_classes,
                        train_indexes, test_indexes, normalize_features=True):
-    num_train_points = len(train_indexes)
+    num_features = len(features[0])
     num_test_points = len(test_indexes)
     train_features = features[train_indexes, :]
     train_classes = point_classes[train_indexes]
@@ -48,7 +48,7 @@ def classification_run(predictor_factory, features, point_classes, all_classes,
 
         # reduce dimensionality to 1/10 of its original
         # TODO: make this adjustable
-        dim_reducer = PCA(n_components=int(np.ceil(num_train_points/10)))
+        dim_reducer = PCA(n_components=int(np.ceil(num_features/10)))
         train_features = dim_reducer.fit_transform(train_features)
         test_features = dim_reducer.transform(test_features)
 
