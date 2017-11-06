@@ -10,8 +10,10 @@ import shutil
 import subprocess
 
 
+# 'multiline lambda' runner
+
 lambda_str_cache = {}
-def call_string_extended_lambda(func_str, *args, **kwargs):  # NOQA
+def call_string_extended_lambda(func_str, *args, **kwargs): # NOQA (cache line above)
     if func_str not in lambda_str_cache:
         context = {}
         exec(re.sub('^lambda(.*):', 'def func(\\1):', func_str), context)
@@ -32,10 +34,10 @@ def mkdir_p(dir):
 def symlink(src, dest):
     if os.name == 'nt':
         if os.path.isdir(src):
-            subprocess.check_output('mklink /d "{}" "{}"'.format(dest, src),
+            subprocess.check_output('mklink /j "{}" "{}"'.format(dest, src),
                                     shell=True)
         else:
-            subprocess.check_output('mklink "{}" "{}"'.format(dest, src),
+            subprocess.check_output('mklink /h "{}" "{}"'.format(dest, src),
                                     shell=True)
     else:
         os.symlink(src, dest)
@@ -77,15 +79,3 @@ def log_step(step_text, start_stars=False):
     end_time = timeit.default_timer()
     log.info(step_format + ' in %.2f seconds',
              'finished', step_text, end_time - start_time)
-
-
-def run_command_logged(command, **kwargs):
-    log = logging.getLogger('modmap')
-    log.info('running command "%s"', command)
-    process = subprocess.Popen(command, stdout=subprocess.PIPE,
-                               stderr=subprocess.STDOUT,
-                               universal_newlines=True, **kwargs)
-    for line in iter(process.stdout.readline, ""):
-        line = line.strip()
-        if line:
-            log.info('%s', line)

@@ -5,7 +5,7 @@ import logging
 import numpy as np
 import scipy.sparse.linalg as linalg
 
-from . import file_formats
+from utils import file_formats
 
 
 def mds(delta, dim):
@@ -36,7 +36,7 @@ def mds(delta, dim):
     return points[:, ~np.isnan(points).any(axis=0)]
 
 
-def run_mds(options):
+def run_mds_step(options, exp_options):
     dists = file_formats.import_dists(options['dists_file'])
     points = mds(dists, options['dimensions']).tolist()
 

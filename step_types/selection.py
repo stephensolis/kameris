@@ -10,11 +10,11 @@ import zipfile
 # these may be used by pick_group_fn/postprocess_fn
 from six.moves import range  # NOQA
 
-from . import file_formats
-from . import utils
+from utils import file_formats
+from utils import utils
 
 
-def run_selection(options, exp_options):
+def run_select_step(options, exp_options):
     groups = exp_options['groups'].copy()
 
     # run pick_group

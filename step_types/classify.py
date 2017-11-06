@@ -1,19 +1,5 @@
 from __future__ import absolute_import, division, unicode_literals
 
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.linear_model import LogisticRegression, SGDClassifier
-from sklearn.neighbors.nearest_centroid import NearestCentroid
-from sklearn.svm import SVC
-
-from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
-# from sklearn.gaussian_process import GaussianProcessClassifier
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.naive_bayes import GaussianNB  # , MultinomialNB
-from sklearn.discriminant_analysis import (
-    LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis)
-
-from sklearn.neural_network import MLPClassifier
-
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import sklearn.metrics
@@ -27,8 +13,9 @@ from six.moves import range
 import stopit
 import timeit
 
-from . import file_formats
-from . import utils
+from .classifier_names import classifiers_by_name
+from utils import file_formats
+from utils import utils
 
 
 def classification_run(predictor_factory, features, point_classes, all_classes,
@@ -163,29 +150,6 @@ def crossvalidation_run(predictor_factory, features, point_classes,
     return final_stats
 
 
-classifiers = {
-    '10-nearest-neighbors': lambda: KNeighborsClassifier(n_neighbors=10),
-    'nearest-centroid-mean': lambda: NearestCentroid(metric='euclidean'),
-    'nearest-centroid-median': lambda: NearestCentroid(metric='manhattan'),
-    'logistic-regression': lambda: LogisticRegression(),
-    'sgd': lambda: SGDClassifier(),
-    'linear-svm': lambda: SVC(kernel='linear'),
-    'quadratic-svm': lambda: SVC(kernel='poly', degree=2),
-    'rbf-svm': lambda: SVC(),
-    # 'gaussian-process': lambda: GaussianProcessClassifier(),
-    #   *really* slow (and docs say O(n^3))
-    'decision-tree': lambda: DecisionTreeClassifier(),
-    'random-forest': lambda: RandomForestClassifier(),
-    'adaboost': lambda: AdaBoostClassifier(),
-    'gaussian-naive-bayes': lambda: GaussianNB(),
-    # 'multinomial-naive-bayes': lambda: MultinomialNB(),
-    #   always gives strange errors
-    'lda': lambda: LinearDiscriminantAnalysis(),
-    'qda': lambda: QuadraticDiscriminantAnalysis(),
-    'multilayer-perceptron': lambda: MLPClassifier()
-}
-
-
 class NumpyJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.integer):
@@ -198,11 +162,11 @@ class NumpyJSONEncoder(json.JSONEncoder):
             return super(NumpyJSONEncoder, self).default(obj)
 
 
-def run_experiment(options):
+def run_classify_step(options, exp_options):
     log = logging.getLogger('modmap.classify')
 
     if options['classifiers'] == 'all':
-        classifier_names = classifiers.keys()
+        classifier_names = classifiers_by_name.keys()
     else:
         classifier_names = options['classifiers']
 
@@ -242,8 +206,9 @@ def run_experiment(options):
                 with stopit.ThreadingTimeout(seconds=timeout_seconds,
                                              swallow_exc=False):
                     results[classifier_name] = crossvalidation_run(
-                        classifiers[classifier_name], features, point_classes,
-                        all_classes, validation_count, mode=features_mode,
+                        classifiers_by_name[classifier_name], features,
+                        point_classes, all_classes, validation_count,
+                        mode=features_mode,
                         normalize_features=normalize_features
                     )
             except stopit.TimeoutException:
