@@ -14,8 +14,7 @@ import stopit
 import timeit
 
 from .classifier_names import classifiers_by_name
-from utils import file_formats
-from utils import utils
+from utils import file_formats, job_utils
 
 
 def classification_run(predictor_factory, features, point_classes, all_classes,
@@ -198,7 +197,7 @@ def run_classify_step(options, exp_options):
 
     results = {}
     for i, classifier_name in enumerate(classifier_names):
-        with utils.log_step(
+        with job_utils.log_step(
                  "classifier '{}' ({}/{})".format(classifier_name, i+1,
                                                   len(classifier_names))):
             timeout_seconds = 600  # TODO: make this an options key?

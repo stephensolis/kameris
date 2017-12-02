@@ -10,15 +10,14 @@ import zipfile
 # these may be used by pick_group_fn/postprocess_fn
 from six.moves import range  # NOQA
 
-from utils import file_formats
-from utils import utils
+from utils import file_formats, fs_utils, job_utils
 
 
 def run_select_step(options, exp_options):
     groups = exp_options['groups'].copy()
 
     # run pick_group
-    with utils.log_step('running pick_group'):
+    with job_utils.log_step('running pick_group'):
         pick_group_metadata = []
         all_metadata_cache = {}
 
@@ -43,7 +42,7 @@ def run_select_step(options, exp_options):
                 all_metadata_cache[all_metadata_filename] = all_metadata
 
             # perform selection
-            group_metadata = utils.call_string_extended_lambda(
+            group_metadata = job_utils.call_string_extended_lambda(
                 options['pick_group'],
                 copy.deepcopy(all_metadata),
                 copy.deepcopy(group_options)
@@ -52,16 +51,16 @@ def run_select_step(options, exp_options):
                 metadata_entry['group'] = group_name
                 pick_group_metadata.append(metadata_entry)
 
-    utils.mkdir_p(options['fasta_output_dir'])
+    fs_utils.mkdir_p(options['fasta_output_dir'])
 
     # read, process, and write sequences
-    with utils.log_step('processing metadata entries'):
+    with job_utils.log_step('processing metadata entries'):
         final_metadata = []
         archive_cache = {}
         file_counter = 1
 
         for metadata_entry in tqdm(pick_group_metadata, mininterval=1,
-                                   file=utils.LoggerFileAdapter('modmap')):
+                                   file=job_utils.LoggerFileAdapter('modmap')):
             group_options = groups[metadata_entry['group']]
 
             # open archive file
@@ -101,7 +100,7 @@ def run_select_step(options, exp_options):
             # run postprocess if required
             if 'postprocess' in options:
                 new_metadata, sequences_list = zip(
-                    *utils.call_string_extended_lambda(
+                    *job_utils.call_string_extended_lambda(
                         options['postprocess'],
                         copy.deepcopy(metadata_entry), file_sequences
                     )
@@ -122,6 +121,6 @@ def run_select_step(options, exp_options):
                 file_counter += 1
 
     # write metadata
-    with utils.log_step('writing metadata file'):
+    with job_utils.log_step('writing metadata file'):
         with open(options['metadata_output_file'], 'w') as outfile:
             json.dump(final_metadata, outfile)

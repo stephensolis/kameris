@@ -3,11 +3,8 @@ from __future__ import absolute_import, division, unicode_literals
 
 import contextlib
 import logging
-import os
 import re
 import timeit
-import shutil
-import subprocess
 
 
 # 'multiline lambda' runner
@@ -20,34 +17,6 @@ def call_string_extended_lambda(func_str, *args, **kwargs): # NOQA (cache line a
         lambda_str_cache[func_str] = context['func']
 
     return lambda_str_cache[func_str](*args, **kwargs)
-
-
-# filesystem-related
-
-def mkdir_p(dir):
-    try:
-        os.makedirs(dir)
-    except OSError:
-        pass
-
-
-def symlink(src, dest):
-    if os.name == 'nt':
-        if os.path.isdir(src):
-            subprocess.check_output('mklink /j "{}" "{}"'.format(dest, src),
-                                    shell=True)
-        else:
-            subprocess.check_output('mklink /h "{}" "{}"'.format(dest, src),
-                                    shell=True)
-    else:
-        os.symlink(src, dest)
-
-
-def cp_r(src, dest):
-    if os.path.isdir(src):
-        shutil.copytree(src, dest)
-    else:
-        shutil.copy(src, dest)
 
 
 # for formatted log output

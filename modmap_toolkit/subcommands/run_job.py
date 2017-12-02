@@ -16,7 +16,7 @@ import sys
 import time
 import watchtower
 
-from step_types import step_runners
+from job_steps import step_runners
 from utils import utils
 
 

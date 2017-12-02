@@ -19,7 +19,10 @@ def accuracy_for_classifier(classifier_results):
 
 
 def natural_sort_key(string):
-    """See http://www.codinghorror.com/blog/archives/001018.html"""
+    """Given a string, produces a key suitable for use in sorted() which will
+    put the string in natural order.
+
+    Taken from http://www.codinghorror.com/blog/archives/001018.html"""
     return [int(s) if s.isdigit() else s for s in re.split(r'(\d+)', string)]
 
 
