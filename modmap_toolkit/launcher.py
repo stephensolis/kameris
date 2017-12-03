@@ -17,7 +17,10 @@ def main():
     )
     subparsers = parser.add_subparsers()
     for cmd, cmd_settings in iteritems(subcommands):
-        subparser = subparsers.add_parser(cmd)
+        subparser = subparsers.add_parser(
+            cmd, help=cmd_settings['description'],
+            description=cmd_settings['description']
+        )
         cmd_settings['setup_args'](subparser)
         subparser.set_defaults(run=cmd_settings['run'])
 

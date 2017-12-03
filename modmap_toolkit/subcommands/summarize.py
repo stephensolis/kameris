@@ -32,10 +32,16 @@ def natural_sort_key(string):
 
 
 def setup_args(parser):
-    parser.add_argument('job_dir', type=fs_utils.argparse_check_dir)
+    parser.add_argument('job_dir', type=fs_utils.argparse_check_dir,
+                        help='the base directory of the job output')
     parser.add_argument('plot_output_dir', nargs='?',
-                        type=fs_utils.argparse_check_dir)
-    parser.add_argument('--top-n', type=argparse_positive_int, default=1)
+                        type=fs_utils.argparse_check_dir,
+                        help='if specified, saves MDS plots to this directory '
+                             '(requires an MDS job step and Mathematica '
+                             'installed)')
+    parser.add_argument('--top-n', type=argparse_positive_int, default=1,
+                        help='the top-N results by confidence to accept as a '
+                             'correct prediction (defaults to top-1)')
 
 
 def run(args):

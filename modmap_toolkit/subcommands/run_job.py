@@ -212,9 +212,13 @@ def setup_logging(job_name, settings):
 
 
 def setup_args(parser):
-    parser.add_argument('job_file', type=argparse.FileType('r'))
+    parser.add_argument('job_file', type=argparse.FileType('r'),
+                        help='job description YAML file')
     parser.add_argument('settings_files', nargs='+',
-                        type=argparse.FileType('r'))
+                        type=argparse.FileType('r'),
+                        help='run settings YAML files (in case of duplicated '
+                             'settings keys, the one in the last file takes '
+                             'priority)')
 
 
 def run(args):
