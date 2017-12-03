@@ -5,7 +5,7 @@ import logging
 import numpy as np
 import scipy.sparse.linalg as linalg
 
-from utils import file_formats
+from ..utils import file_formats
 
 
 def mds(delta, dim):

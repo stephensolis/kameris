@@ -1,6 +1,7 @@
 from __future__ import (
     absolute_import, division, print_function, unicode_literals)
 
+import argparse
 import boto3
 import collections
 import copy
@@ -16,8 +17,8 @@ import sys
 import time
 import watchtower
 
-from job_steps import step_runners
-from utils import utils
+from ..job_steps import step_runners
+from ..utils import fs_utils, job_utils
 
 
 def make_aws_args(settings):
@@ -145,16 +146,16 @@ def preprocess_steps(steps, paths, exp_options):
 
 
 def run_experiment_copy(copy_options, paths, local_dirs, job_name):
-    with utils.log_step("copying files from experiment '{}'"
-                        .format(copy_options['from']), start_stars=True):
+    with job_utils.log_step("copying files from experiment '{}'"
+                            .format(copy_options['from']), start_stars=True):
         for j, filename in enumerate(copy_options['files']):
-            with utils.log_step("file '{}' ({}/{})".format(
+            with job_utils.log_step("file '{}' ({}/{})".format(
                     filename, j+1, len(copy_options['files']))):
                 if ('real_copy' not in copy_options or
                         not copy_options['real_copy']):
-                    copy_func = utils.symlink
+                    copy_func = job_utils.symlink
                 else:
-                    copy_func = utils.cp_r
+                    copy_func = job_utils.cp_r
 
                 src_paths = experiment_paths(local_dirs, job_name,
                                              copy_options['from'])
@@ -177,7 +178,7 @@ def run_experiment_steps(steps, exp_options):
             log.info("*** skipping %s because of 'copy' directive", step_desc)
             continue
 
-        with utils.log_step(step_desc, start_stars=True):
+        with job_utils.log_step(step_desc, start_stars=True):
             step_runners[step_options['type']](step_options, exp_options)
 
 
@@ -210,23 +211,25 @@ def setup_logging(job_name, settings):
     return log, formatter
 
 
-if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        print('usage: job_runner.py <job file> <settings file>')
-        sys.exit(1)
+def setup_args(parser):
+    parser.add_argument('job_file', type=argparse.FileType('r'))
+    parser.add_argument('settings_files', nargs='+',
+                        type=argparse.FileType('r'))
 
-    # load config files
-    with open(sys.argv[1], 'r') as infile:
-        job_options = YAML(typ='safe').load(infile)
-    with open(sys.argv[2], 'r') as infile:
-        settings = YAML(typ='safe').load(infile)
+
+def run(args):
+    job_options = YAML(typ='safe').load(args.job_file)
+
+    settings = {}
+    for settings_file in args.settings_files:
+        settings.update(YAML(typ='safe').load(settings_file))
 
     local_dirs = settings['local_dirs']
     job_name = job_options['name']
 
     experiments = job_options['experiments']
     if isinstance(experiments, six.string_types):
-        experiments = utils.call_string_extended_lambda(
+        experiments = job_utils.call_string_extended_lambda(
             experiments.format(**experiment_paths(local_dirs, job_name, ''))
         )
     experiments = preprocess_experiments(experiments)
@@ -234,9 +237,9 @@ if __name__ == '__main__':
     log, formatter = setup_logging(job_name, settings)
 
     for i, (exp_name, exp_options) in enumerate(iteritems(experiments)):
-        with utils.log_step("experiment '{}' ({}/{})"
-                            .format(exp_name, i+1, len(experiments)),
-                            start_stars=True):
+        with job_utils.log_step("experiment '{}' ({}/{})"
+                                .format(exp_name, i+1, len(experiments)),
+                                start_stars=True):
             exp_options = exp_options.copy()
             exp_options['experiment_name'] = exp_name
 
@@ -244,10 +247,10 @@ if __name__ == '__main__':
             paths = experiment_paths(local_dirs, job_name, exp_name)
             steps = preprocess_steps(job_options['steps'], paths, exp_options)
             if isinstance(exp_options['groups'], six.string_types):
-                exp_options['groups'] = utils.call_string_extended_lambda(
+                exp_options['groups'] = job_utils.call_string_extended_lambda(
                     exp_options['groups'].format(**dict(exp_options, **paths))
                 )
-            utils.mkdir_p(paths['output_dir'])
+            fs_utils.mkdir_p(paths['output_dir'])
 
             # start file log
             file_logger = logging.FileHandler(paths['log_file'], mode='w')

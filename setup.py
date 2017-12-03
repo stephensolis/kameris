@@ -1,7 +1,4 @@
-from __future__ import absolute_import, division, unicode_literals
-
-import os
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 setup(
@@ -23,11 +20,10 @@ setup(
     author_email='stephsolis@gmail.com',
     url='https://github.com/stephensolis/modmap-toolkit/',
     license='MIT',
-    packages=['modmap_toolkit'],
-    data_files=[
-        ('scripts', [os.path.join('modmap_toolkit', 'scripts', p)
-                     for p in os.listdir('modmap_toolkit/scripts')])
-    ],
+    packages=find_packages(),
+    package_data={
+        'modmap_toolkit': ['scripts/*']
+    },
     entry_points={
         'console_scripts': [
             'modmap-toolkit = modmap_toolkit.launcher:main'

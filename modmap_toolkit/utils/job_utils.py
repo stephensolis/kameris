@@ -10,7 +10,7 @@ import timeit
 # 'multiline lambda' runner
 
 lambda_str_cache = {}
-def call_string_extended_lambda(func_str, *args, **kwargs): # NOQA (cache line above)
+def call_string_extended_lambda(func_str, *args, **kwargs):  # NOQA (cache line above)
     if func_str not in lambda_str_cache:
         context = {}
         exec(re.sub('^lambda(.*):', 'def func(\\1):', func_str), context)

@@ -1,11 +1,11 @@
 # -*- mode: python -*-
 
 
-a = Analysis([os.path.join('modmap_toolkit', 'launcher.py')],
+a = Analysis(['modmap-toolkit.py'],
              pathex=[os.getcwd()],
              binaries=[],
              datas=[],
-             hiddenimports=[],
+             hiddenimports=['sklearn.neighbors.typedefs', 'sklearn.tree._utils'],
              hookspath=[],
              runtime_hooks=[],
              excludes=[],
@@ -14,16 +14,13 @@ a = Analysis([os.path.join('modmap_toolkit', 'launcher.py')],
 pyz = PYZ(a.pure, a.zipped_data)
 exe = EXE(pyz,
           a.scripts,
-          exclude_binaries=True,
+          a.binaries,
+          a.zipfiles,
+          a.datas,
           name='modmap-toolkit',
           debug=False,
           strip=False,
-          upx=True,
-          console=True)
-coll = COLLECT(exe,
-               a.binaries,
-               a.zipfiles,
-               a.datas,
-               strip=False,
-               upx=True,
-               name='modmap-toolkit')
+          upx=False,
+          runtime_tmpdir=None,
+          console=True,
+          icon='logo/logo.ico')

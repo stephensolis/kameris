@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, unicode_literals
 
 
+import argparse
 import os
 import shutil
 import subprocess
@@ -31,3 +32,10 @@ def cp_r(src, dest):
         shutil.copytree(src, dest)
     else:
         shutil.copy(src, dest)
+
+
+def argparse_check_dir(dir):
+    if not os.path.isdir(dir):
+        raise argparse.ArgumentTypeError(dir + ' is not a directory')
+    else:
+        return dir

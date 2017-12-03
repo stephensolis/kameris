@@ -4,7 +4,7 @@
 # \
 !ifndef 0 # \
 # nmake stuff \
-CLEAN_CMD = rd /s /q build dist modmap_toolkit.egg-info && del /s *.pyc *.pyo || VER>NUL # \
+CLEAN_CMD = rd /s /q build dist modmap_toolkit.egg-info || del /s *.pyc *.pyo || VER>NUL # \
 !else
 # make stuff
 CLEAN_CMD = rm -rf build dist modmap_toolkit.egg-info && find . -type f \( -name '*.pyc' -o -name '*.pyo' \) -delete
@@ -33,4 +33,4 @@ clean:
 
 
 lint:
-	python -m flake8 modmap_toolkit
+	python -m flake8 modmap_toolkit modmap-toolkit.py setup.py

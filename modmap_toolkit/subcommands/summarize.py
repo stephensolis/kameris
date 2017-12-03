@@ -1,21 +1,26 @@
 from __future__ import (
     absolute_import, division, print_function, unicode_literals)
 
+import argparse
+import base64
+import collections
+import json
+import os
 import re
+from six import iteritems
+import subprocess
+import tabulate
+
+from ..job_steps.classifiers import classifier_names as all_classifiers
+from ..utils import fs_utils
 
 
-all_classifiers = {
-    '10-nearest-neighbors', 'linear-svm', 'quadratic-svm',
-    'gaussian-naive-bayes', 'decision-tree', 'random-forest',
-    'logistic-regression', 'nearest-centroid-mean',
-    'nearest-centroid-median'
-}
-accuracy_topN = 1
-accuracy_key = 'top' + str(accuracy_topN)
-
-
-def accuracy_for_classifier(classifier_results):
-    return classifier_results[accuracy_key]['accuracy']*100
+def argparse_positive_int(num):
+    num = int(num)
+    if num <= 0:
+        raise argparse.ArgumentTypeError('must be positive')
+    else:
+        return num
 
 
 def natural_sort_key(string):
@@ -26,26 +31,23 @@ def natural_sort_key(string):
     return [int(s) if s.isdigit() else s for s in re.split(r'(\d+)', string)]
 
 
-if __name__ == '__main__':
-    import base64
-    from client import utils
-    import collections
-    import json
-    import os
-    from six import iteritems
-    import subprocess
-    import sys
-    import tabulate
+def setup_args(parser):
+    parser.add_argument('job_dir', type=fs_utils.argparse_check_dir)
+    parser.add_argument('plot_output_dir', nargs='?',
+                        type=fs_utils.argparse_check_dir)
+    parser.add_argument('--top-n', type=argparse_positive_int, default=1)
 
-    if len(sys.argv) < 2 or len(sys.argv) > 3:
-        print('usage: job_summarizer.py <job directory>'
-              ' (<base plot output directory>)')
-        sys.exit(1)
+
+def run(args):
+    accuracy_key = 'top{}'.format(args.top_n)
+
+    def accuracy_for_classifier(classifier_results):
+        return classifier_results[accuracy_key]['accuracy'] * 100
 
     run_stats = {}
 
-    for run_name in os.listdir(sys.argv[1]):
-        curr_path = os.path.join(sys.argv[1], run_name)
+    for run_name in os.listdir(args.job_dir):
+        curr_path = os.path.join(args.job_dir, run_name)
         if not os.path.isdir(curr_path):
             continue
 
@@ -138,7 +140,7 @@ if __name__ == '__main__':
     for exp_name in exp_names:
         curr_stats = run_stats[exp_name]
         best_stats = curr_stats['best_classifier']
-        if len(curr_stats['classes']) <= accuracy_topN:
+        if len(curr_stats['classes']) <= args.top_n:
             continue
 
         print()
@@ -203,35 +205,40 @@ if __name__ == '__main__':
         ))
         print()
 
-        if len(sys.argv) == 3 and len(curr_stats['classes']) <= 9:
-            base_output_path = os.path.join(
-                sys.argv[2], os.path.basename(sys.argv[1])
-            )
-            utils.mkdir_p(base_output_path)
-            base_output_filename = os.path.join(
-                base_output_path,
-                '{}-k={k}-{dist}-{classifier}'.format(exp_name, **best_stats)
-            )
-            subprocess.call(
-                'wolframscript "{}" {}'.format(
-                    os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                                 'client', 'make_plots.wls'),
-                    base64.b64encode(json.dumps({
-                        'accuracy_type': accuracy_key,
-                        'classifier_name': best_stats['classifier'],
-                        'metadata_file': best_stats['metadata_file'],
-                        'classification_file':
-                            best_stats['classification_file'],
-                        'mds_file': best_stats['mds_file'],
-                        'output_file': base_output_filename + '-plots.nb',
-                        'svg_output_file':
-                            base_output_filename + '-plot2d.svg',
-                        'png_output_file':
-                            base_output_filename + '-plot2d.png'
-                    }))
-                ),
-                shell=True
-            )
+        if args.plot_output_dir is not None:
+            num_classes = len(curr_stats['classes'])
+            if num_classes > 9:
+                print('Warning: skipping plot generation because there are '
+                      'too many classes ({} > 9)'.format(num_classes))
+            else:
+                base_output_path = os.path.join(
+                    args.plot_output_dir, os.path.basename(args.job_dir)
+                )
+                fs_utils.mkdir_p(base_output_path)
+                base_output_filename = os.path.join(
+                    base_output_path, '{}-k={k}-{dist}-{classifier}'
+                                      .format(exp_name, **best_stats)
+                )
+                subprocess.call(
+                    'wolframscript "{}" {}'.format(
+                        os.path.join(os.path.dirname(__file__),
+                                     '..', 'scripts', 'make_plots.wls'),
+                        base64.b64encode(json.dumps({
+                            'accuracy_type': accuracy_key,
+                            'classifier_name': best_stats['classifier'],
+                            'metadata_file': best_stats['metadata_file'],
+                            'classification_file':
+                                best_stats['classification_file'],
+                            'mds_file': best_stats['mds_file'],
+                            'output_file': base_output_filename + '-plots.nb',
+                            'svg_output_file':
+                                base_output_filename + '-plot2d.svg',
+                            'png_output_file':
+                                base_output_filename + '-plot2d.png'
+                        }))
+                    ),
+                    shell=True
+                )
 
         print('='*80)
 
@@ -242,7 +249,7 @@ if __name__ == '__main__':
           'k={k}, {dist}, {classifier}'
           .format(**run_stats[exp_name]['best_classifier'])]
          for exp_name in exp_names
-         if len(run_stats[exp_name]['classes']) > accuracy_topN],
+         if len(run_stats[exp_name]['classes']) > args.top_n],
         ['experiment', 'best accuracy', 'run info'],
         floatfmt='.2f'
     ))

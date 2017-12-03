@@ -13,8 +13,8 @@ from six.moves import range
 import stopit
 import timeit
 
-from .classifier_names import classifiers_by_name
-from utils import file_formats, job_utils
+from .classifiers import classifiers_by_name
+from ..utils import file_formats, job_utils
 
 
 def classification_run(predictor_factory, features, point_classes, all_classes,

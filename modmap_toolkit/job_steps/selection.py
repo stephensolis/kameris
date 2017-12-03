@@ -10,7 +10,7 @@ import zipfile
 # these may be used by pick_group_fn/postprocess_fn
 from six.moves import range  # NOQA
 
-from utils import file_formats, fs_utils, job_utils
+from ..utils import file_formats, fs_utils, job_utils
 
 
 def run_select_step(options, exp_options):

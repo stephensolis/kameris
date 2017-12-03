@@ -38,3 +38,5 @@ classifiers_by_name = {
     # 'multinomial-naive-bayes': lambda: MultinomialNB(),
     #   always gives strange errors
 }
+
+classifier_names = classifiers_by_name.keys()
