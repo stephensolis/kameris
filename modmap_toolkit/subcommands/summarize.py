@@ -1,7 +1,6 @@
 from __future__ import (
     absolute_import, division, print_function, unicode_literals)
 
-import argparse
 import base64
 import collections
 import json
@@ -15,33 +14,12 @@ from ..job_steps.classifiers import classifier_names as all_classifiers
 from ..utils import fs_utils
 
 
-def argparse_positive_int(num):
-    num = int(num)
-    if num <= 0:
-        raise argparse.ArgumentTypeError('must be positive')
-    else:
-        return num
-
-
 def natural_sort_key(string):
     """Given a string, produces a key suitable for use in sorted() which will
     put the string in natural order.
 
     Taken from http://www.codinghorror.com/blog/archives/001018.html"""
     return [int(s) if s.isdigit() else s for s in re.split(r'(\d+)', string)]
-
-
-def setup_args(parser):
-    parser.add_argument('job_dir', type=fs_utils.argparse_check_dir,
-                        help='the base directory of the job output')
-    parser.add_argument('plot_output_dir', nargs='?',
-                        type=fs_utils.argparse_check_dir,
-                        help='if specified, saves MDS plots to this directory '
-                             '(requires an MDS job step and Mathematica '
-                             'installed)')
-    parser.add_argument('--top-n', type=argparse_positive_int, default=1,
-                        help='the top-N results by confidence to accept as a '
-                             'correct prediction (defaults to top-1)')
 
 
 def run(args):

@@ -1,10 +1,5 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
+from modmap_toolkit.__main__ import main
 
-print('Loading... ', end='')
-from modmap_toolkit import launcher  # NOQA
-print('done.')
-print()
-
-launcher.main()
+main()

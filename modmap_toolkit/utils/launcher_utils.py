@@ -8,6 +8,7 @@ import psutil
 from six.moves import input
 import subprocess
 import sys
+import textwrap
 
 
 def name_matches_process_or_parents(proc, name):
@@ -82,13 +83,13 @@ def ensure_running_in_shell(no_shell_message=None):
     used to perform a shell injection."""
 
     if no_shell_message is None:
-        no_shell_message = """
-        {0} is a command-line program, do not double-click it again!
-        Type your command in this prompt below.
+        no_shell_message = textwrap.dedent("""
+            {0} is a command-line program, do not double-click it again!
+            Type your command in this prompt below.
 
-        If you are not sure what to do, type {0} --help on Windows
-        or ./{0} --help on macOS/Linux.
-        """.format(os.path.basename(sys.argv[0]))
+            If you are not sure what to do, type {0} --help on Windows
+            or ./{0} --help on macOS/Linux.
+        """.format(os.path.basename(sys.argv[0])))
 
     if not maybe_running_in_shell():
         spawn_shell(no_shell_message)

@@ -1,7 +1,6 @@
 from __future__ import (
     absolute_import, division, print_function, unicode_literals)
 
-import argparse
 import boto3
 import collections
 import copy
@@ -209,16 +208,6 @@ def setup_logging(job_name, settings):
         log.addHandler(aws_logger)
 
     return log, formatter
-
-
-def setup_args(parser):
-    parser.add_argument('job_file', type=argparse.FileType('r'),
-                        help='job description YAML file')
-    parser.add_argument('settings_files', nargs='+',
-                        type=argparse.FileType('r'),
-                        help='run settings YAML files (in case of duplicated '
-                             'settings keys, the one in the last file takes '
-                             'priority)')
 
 
 def run(args):

@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='modmap-toolkit',
-    version='0.0.1pre',
+    version='0.1.dev1',
     description=('Generation, analysis, and evaluation tools for Molecular '
                  'Distance Maps.'),
     classifiers=[
@@ -26,7 +26,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'modmap-toolkit = modmap_toolkit.launcher:main'
+            'modmap-toolkit = modmap_toolkit.__main__:main'
         ]
     },
     install_requires=[

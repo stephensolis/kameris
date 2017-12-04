@@ -1,18 +1,55 @@
 from __future__ import absolute_import, division, unicode_literals
 
-from . import run_job
-from . import summarize
+import argparse
+import os
+
+
+def argparse_positive_int(num):
+    num = int(num)
+    if num <= 0:
+        raise argparse.ArgumentTypeError('must be positive')
+    else:
+        return num
+
+
+def argparse_check_dir(dir):
+    if not os.path.isdir(dir):
+        raise argparse.ArgumentTypeError(dir + ' is not a directory')
+    else:
+        return dir
+
+
+def run_job_setup_args(parser):
+    parser.add_argument('job_file', type=argparse.FileType('r'),
+                        help='job description YAML file')
+    parser.add_argument('settings_files', nargs='+',
+                        type=argparse.FileType('r'),
+                        help='run settings YAML files (in case of duplicated '
+                             'settings keys, the one in the last file takes '
+                             'priority)')
+
+
+def summarize_setup_args(parser):
+    parser.add_argument('job_dir', type=argparse_check_dir,
+                        help='the base directory of the job output')
+    parser.add_argument('plot_output_dir', nargs='?', type=argparse_check_dir,
+                        help='if specified, saves MDS plots to this directory '
+                             '(requires an MDS job step and Mathematica '
+                             'installed)')
+    parser.add_argument('--top-n', type=argparse_positive_int, default=1,
+                        help='the top-N results by confidence to accept as a '
+                             'correct prediction (defaults to top-1)')
 
 
 subcommands = {
     'run-job': {
-        'run': run_job.run,
-        'setup_args': run_job.setup_args,
+        'module_name': 'run_job',
+        'setup_args': run_job_setup_args,
         'description': 'Executes a job description file.'
     },
     'summarize': {
-        'run': summarize.run,
-        'setup_args': summarize.setup_args,
+        'module_name': 'summarize',
+        'setup_args': summarize_setup_args,
         'description': 'Prints summary information from a classification job '
                        'run.'
     },
