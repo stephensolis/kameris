@@ -25,10 +25,10 @@ class LoggerFileAdapter:
     def __init__(self, logger_name):
         self.log = logging.getLogger(logger_name)
 
-    def write(self, str):
-        str = str.strip()
-        if str:
-            self.log.info('%s', str)
+    def write(self, string):
+        string = string.strip()
+        if string:
+            self.log.info('%s', string)
 
     def flush(self):
         pass

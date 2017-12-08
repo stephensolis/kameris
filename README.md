@@ -1,6 +1,7 @@
 # modmap-toolkit
 
 [![Build Status](https://travis-ci.org/stephensolis/modmap-toolkit.svg?branch=master)](https://travis-ci.org/stephensolis/modmap-toolkit)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/2286db6fde1d4b729127f820d7896cd0)](https://www.codacy.com/app/stephensolis/modmap-toolkit)
 
 This is a fast and user-friendly generation and analysis pipeline for Molecular Distance Maps.
 

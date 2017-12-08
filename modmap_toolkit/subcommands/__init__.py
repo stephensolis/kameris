@@ -12,11 +12,11 @@ def argparse_positive_int(num):
         return num
 
 
-def argparse_check_dir(dir):
-    if not os.path.isdir(dir):
-        raise argparse.ArgumentTypeError(dir + ' is not a directory')
+def argparse_check_dir(path):
+    if not os.path.isdir(path):
+        raise argparse.ArgumentTypeError(path + ' is not a directory')
     else:
-        return dir
+        return path
 
 
 def run_job_setup_args(parser):
@@ -54,8 +54,8 @@ subcommands = {
                        'run.'
     },
     # 'classify': {
-    #     'run': classify.run,
-    #     'setup_args': classify.setup_args,
+    #     'module_name': 'classify',
+    #     'setup_args': classify_setup_args,
     #     'description': 'Runs sequences through a trained model.'
     # }
 }

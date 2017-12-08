@@ -15,7 +15,7 @@ def read_fasta(infile, include_other_letters=False, return_headers=False):
     currseq = []
     for line in infile:
         line = line.strip()
-        if type(line) is bytes and str != bytes:
+        if isinstance(line, bytes) and str != bytes:
             line = line.decode()
         if not line or line[0] == '>':
             if return_headers and line[0] == '>':

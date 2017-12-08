@@ -48,10 +48,8 @@ def spawn_shell(message=''):
 
     win_echo_command = ' && '.join('echo ' + l if l.strip() else 'echo.'
                                    for l in message.splitlines())
-    unix_echo_command = '; '.join(map(
-        lambda l: "echo '{}'".format(l),
-        message.splitlines()
-    ))
+    unix_echo_command = '; '.join("echo '{}'".format(l)
+                                  for l in message.splitlines())
 
     if platform.system() == 'Windows':
         subprocess.Popen('start cmd.exe /k "{}"'.format(win_echo_command),

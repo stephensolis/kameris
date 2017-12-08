@@ -7,9 +7,9 @@ import subprocess
 import platform
 
 
-def mkdir_p(dir):
+def mkdir_p(path):
     try:
-        os.makedirs(dir)
+        os.makedirs(path)
     except OSError:
         pass
 
