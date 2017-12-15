@@ -11,18 +11,18 @@ import sys
 import textwrap
 
 
-def name_matches_process_or_parents(proc, name):
-    """Returns whether the given name is the name of the given psutil.Process
-    or any of its parents."""
+def names_match_process_or_parents(proc, names):
+    """Returns whether any of the given names are the name of the given
+    psutil.Process or any of its parents."""
 
     if proc is None:
         return False
-    elif proc.name() == name:
+    elif any(name == proc.name().lower() for name in names):
         return True
     elif proc.parent() is not None and proc.pid == proc.parent().pid:
         return False
     else:
-        return name_matches_process_or_parents(proc.parent(), name)
+        return names_match_process_or_parents(proc.parent(), names)
 
 
 def maybe_running_in_shell():
@@ -32,9 +32,14 @@ def maybe_running_in_shell():
 
     proc = psutil.Process()
     if platform.system() == 'Windows':
-        return not name_matches_process_or_parents(proc, 'explorer.exe')
+        return not names_match_process_or_parents(proc, ['explorer.exe'])
+    elif platform.system() == 'Linux':
+        return not (names_match_process_or_parents(proc, [
+            'konqueror', 'dolphin', 'krusader', 'nautilus', 'thunar',
+            'pcmanfm', 'caja', 'nemo', 'xfe'
+        ]) or proc.parent().parent().pid == 1)
     else:
-        return sys.stdout.isatty()
+        return True
 
 
 def spawn_shell(message=''):
