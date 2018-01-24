@@ -7,24 +7,30 @@ import sklearn.metrics
 from collections import defaultdict
 import json
 import logging
+import mmg_formats
 import numpy as np
+import scipy.sparse as sparse
 from six import iteritems
-from six.moves import range
+from six.moves import range, zip
 import stopit
 import timeit
 
-from .classifiers import classifiers_by_name
-from ..utils import file_formats, job_utils
+from ._classifiers import classifiers_by_name
+from ..utils import job_utils
 
 
 def classification_run(predictor_factory, features, point_classes, all_classes,
                        train_indexes, test_indexes, normalize_features=True):
     num_features = len(features[0])
     num_test_points = len(test_indexes)
-    train_features = features[train_indexes, :]
     train_classes = point_classes[train_indexes]
-    test_features = features[test_indexes, :]
     test_realclasses = point_classes[test_indexes]
+
+    train_features = [features[i] for i in train_indexes]
+    test_features = [features[i] for i in test_indexes]
+    if sparse.issparse(train_features[0]):
+        train_features = sparse.vstack(train_features, format='csr')
+        test_features = sparse.vstack(test_features, format='csr')
 
     if normalize_features:
         # scale each feature dimension to 0 mean and unit variance
@@ -170,10 +176,15 @@ def run_classify_step(options, exp_options):
         classifier_names = options['classifiers']
 
     if options['features_type'] == 'mmg-dists':
-        features = file_formats.import_dists(options['features_file'])
+        features = mmg_formats.dist_reader \
+                              .read_matrix(options['features_file'])
         features_mode = 'dists'
-    elif options['features_type'] == 'mmg-cgrs':
-        features = file_formats.import_cgrs(options['features_file'])
+    elif options['features_type'] == 'mmg-repr':
+        features = []
+        reader = mmg_formats.repr_reader(options['features_file'])
+        for i in range(reader.count):
+            features.append(reader.read_matrix(i, flatten=True))
+
         features_mode = 'features'
     elif options['features_type'] == 'json-features':
         with open(options['features_file'], 'r') as infile:

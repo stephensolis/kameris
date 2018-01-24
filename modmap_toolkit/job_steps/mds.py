@@ -2,10 +2,9 @@ from __future__ import absolute_import, division, unicode_literals
 
 import json
 import logging
+import mmg_formats
 import numpy as np
 import scipy.sparse.linalg as linalg
-
-from ..utils import file_formats
 
 
 def mds(delta, dim):
@@ -37,7 +36,7 @@ def mds(delta, dim):
 
 
 def run_mds_step(options, exp_options):
-    dists = file_formats.import_dists(options['dists_file'])
+    dists = mmg_formats.dist_reader.read_matrix(options['dists_file'])
     points = mds(dists, options['dimensions']).tolist()
 
     with open(options['output_file'], 'w') as outfile:

@@ -4,6 +4,7 @@ import copy
 import json
 import os
 from six import iteritems
+from six.moves import zip
 from tqdm import tqdm
 import zipfile
 
