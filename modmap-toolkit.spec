@@ -6,7 +6,8 @@ a = Analysis(['modmap-toolkit.py'],
              binaries=[],
              datas=[],
              hiddenimports=[
-                 'sklearn.neighbors.typedefs', 'sklearn.tree._utils',
+                 'sklearn.neighbors.typedefs', 'sklearn.neighbors.quad_tree', 'sklearn.tree._utils',
+                 'scipy._lib.messagestream',
                  'modmap_toolkit.subcommands.run_job', 'modmap_toolkit.subcommands.summarize'
              ],
              hookspath=[],

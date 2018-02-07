@@ -2,13 +2,14 @@
 
 [![Build Status](https://travis-ci.org/stephensolis/modmap-toolkit.svg?branch=master)](https://travis-ci.org/stephensolis/modmap-toolkit)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/2286db6fde1d4b729127f820d7896cd0)](https://www.codacy.com/app/stephensolis/modmap-toolkit)
+[![PyPI version](https://badge.fury.io/py/modmap-toolkit.svg)](https://badge.fury.io/py/modmap-toolkit)
 
 This is a fast and user-friendly generation and analysis pipeline for Molecular Distance Maps.
 
 It uses:
 
-- [stephensolis/modmap-generator-cpp](https://github.com/stephensolis/modmap-generator-cpp) to generate DNA sequence representations and distance matrices
-- [scikit-learn](http://scikit-learn.org/) for supervised classification experiments
+- [stephensolis/modmap-generator-cpp](https://github.com/stephensolis/modmap-generator-cpp) to generate kmer count vectors and distance matrices
+- [scikit-learn](http://scikit-learn.org/) for supervised classifiers
 - [Wolfram Mathematica](https://www.wolfram.com/mathematica/) and code based on [stephensolis/modmap-generator-mma](https://github.com/stephensolis/modmap-generator-mma) to generate interactive plots
 - [NumPy](http://www.numpy.org/) and [SciPy](https://www.scipy.org/) for MultiDimensional Scaling (MDS)
 

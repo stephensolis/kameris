@@ -11,7 +11,9 @@ def run_command_logged(command, **kwargs):
                                stderr=subprocess.STDOUT,
                                universal_newlines=True, **kwargs)
     for line in iter(process.stdout.readline, ''):
-        log.info('%s', line.strip())
+        line = line.strip()
+        if line:
+            log.info('%s', line.strip())
     if process.wait() != 0:
         raise subprocess.CalledProcessError(process.returncode, command, None)
 

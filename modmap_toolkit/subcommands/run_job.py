@@ -128,6 +128,12 @@ def preprocess_steps(steps, paths, exp_options):
                 paths['metadata_output_file']
         elif step_options['type'] == 'command':
             do_option_substitutions(step_options, ['command'])
+        elif step_options['type'] == 'kmers':
+            step_options['fasta_output_dir'] = paths['fasta_output_dir']
+            make_output_paths(step_options, ['output_file'])
+            do_option_substitutions(step_options, ['k'])
+        elif step_options['type'] == 'distances':
+            make_output_paths(step_options, ['input_file', 'output_prefix'])
         elif step_options['type'] == 'mds':
             make_output_paths(step_options, ['dists_file', 'output_file'])
         elif step_options['type'] == 'classify':
