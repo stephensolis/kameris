@@ -5,15 +5,15 @@ local_dirs:
   archives: /data/archives
   # the directory containing JSON metadata files
   metadata: /data/metadata
-  # the directory to use for output files
+  # the directory for storage of job output
   output: /data/output
 
 # if desired, specifies an external service to use for logging
 # this is optional
-remote_logging:
-  # only AWS CloudWatch is currently supported
-  destination: cloudwatch
-  log_group: modmap # the CloudWatch group (must already exist)
-  region: us-east-1 # the AWS region
-  aws_key: # your AWS Access Key ID
-  aws_secret: # your AWS Secret Access Key
+#remote_logging:
+#  # only AWS CloudWatch is currently supported
+#  destination: cloudwatch
+#  log_group: modmap # the CloudWatch group (must already exist)
+#  region: us-east-1 # the AWS region
+#  aws_key: # your AWS Access Key ID
+#  aws_secret: # your AWS Secret Access Key

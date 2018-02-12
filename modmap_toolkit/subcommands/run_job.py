@@ -158,9 +158,9 @@ def run_experiment_copy(copy_options, paths, local_dirs, job_name):
                     filename, j+1, len(copy_options['files']))):
                 if ('real_copy' not in copy_options or
                         not copy_options['real_copy']):
-                    copy_func = job_utils.symlink
+                    copy_func = fs_utils.symlink
                 else:
-                    copy_func = job_utils.cp_r
+                    copy_func = fs_utils.cp_r
 
                 src_paths = experiment_paths(local_dirs, job_name,
                                              copy_options['from'])

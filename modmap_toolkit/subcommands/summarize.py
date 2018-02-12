@@ -10,8 +10,11 @@ from six import iteritems
 import subprocess
 import tabulate
 
-from ..job_steps.classifiers import classifier_names as all_classifiers
+from ..job_steps._classifiers import classifier_names
 from ..utils import fs_utils
+
+
+all_classifiers = set(classifier_names)
 
 
 def natural_sort_key(string):
@@ -36,7 +39,12 @@ def run(args):
             continue
 
         base_run_name = re.sub('-k=[0-9]+', '', run_name)
-        run_k = int(re.search('-k=([0-9]+)', run_name).group(1))
+        run_k = re.search('-k=([0-9]+)', run_name)
+        if run_k is None:
+            raise RuntimeError('Run name {} does not have a parameter k, '
+                               'which is currently unsupported'
+                               .format(run_name))
+        run_k = int(run_k.group(1))
 
         if base_run_name not in run_stats:
             with open(os.path.join(curr_path, 'metadata.json')) as f:
