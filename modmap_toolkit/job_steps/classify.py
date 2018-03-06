@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, unicode_literals
 
-from sklearn.decomposition import PCA
+from sklearn.decomposition import TruncatedSVD
 from sklearn.preprocessing import StandardScaler
 import sklearn.metrics
 
@@ -21,7 +21,8 @@ from ..utils import job_utils
 
 def classification_run(predictor_factory, features, point_classes, all_classes,
                        train_indexes, test_indexes, normalize_features=True):
-    num_features = len(features[0])
+    num_features = int(sum(np.count_nonzero(f) for f in features) /
+                       len(features))
     num_test_points = len(test_indexes)
     train_classes = point_classes[train_indexes]
     test_realclasses = point_classes[test_indexes]
@@ -33,14 +34,17 @@ def classification_run(predictor_factory, features, point_classes, all_classes,
         test_features = sparse.vstack(test_features, format='csr')
 
     if normalize_features:
-        # scale each feature dimension to 0 mean and unit variance
-        normalizer = StandardScaler()
+        # scale each feature dimension to unit variance
+        # note mean scaling won't work with sparse vectors
+        # it seems obvious to move this after the SVD but that reduces
+        #   classifier performance substantially
+        normalizer = StandardScaler(with_mean=False)
         train_features = normalizer.fit_transform(train_features)
         test_features = normalizer.transform(test_features)
 
         # reduce dimensionality to 1/10 of its original
         # TODO: make this adjustable
-        dim_reducer = PCA(n_components=int(np.ceil(num_features/10)))
+        dim_reducer = TruncatedSVD(n_components=int(np.ceil(num_features/10)))
         train_features = dim_reducer.fit_transform(train_features)
         test_features = dim_reducer.transform(test_features)
 

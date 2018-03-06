@@ -35,6 +35,7 @@ setup(
         'modmap-generator-formats',
         'numpy',
         'ruamel.yaml',
+        'psutil',
         # it's necessary to freeze scikit-learn since models are neither
         # forward nor backward-compatible
         # modmap-toolkit classify will warn if the current scikit-learn
