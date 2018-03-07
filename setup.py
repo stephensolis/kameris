@@ -1,9 +1,10 @@
 from setuptools import setup, find_packages
+from modmap_toolkit import __version__
 
 
 setup(
     name='modmap-toolkit',
-    version='0.1.dev4',
+    version=__version__,
     description=('Generation, analysis, and evaluation tools for Molecular '
                  'Distance Maps.'),
     classifiers=[

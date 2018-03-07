@@ -4,10 +4,10 @@ dist: trusty
 sudo: false
 
 python:
+  - "3.6"
   - "2.7"
   - "3.4"
   - "3.5"
-  - "3.6"
 
 install:
   - pip install -r test-requirements.txt
@@ -20,5 +20,14 @@ jobs:
   include:
     - stage: distribute
       if: branch = master AND type != pull_request
-      install: skip
+      install: make install
       script: make distribute
+    - os: osx
+      language: generic
+      if: branch = master AND type != pull_request
+      install:
+        - brew upgrade python
+        - sudo mkdir -p /usr/local/man
+        - sudo chown -R "$USER:admin" /usr/local/man
+        - make install
+      script: make distribute-bin

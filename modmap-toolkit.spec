@@ -1,5 +1,14 @@
-# -*- mode: python -*-
+import platform
 
+
+if platform.system() == 'Windows':
+    os_name = 'windows'
+elif platform.system() == 'Linux':
+    os_name = 'linux'
+elif platform.system() == 'Darwin':
+    os_name = 'mac'
+else:
+    os_name = 'unknown'
 
 a = Analysis(['modmap-toolkit.py'],
              pathex=[os.getcwd()],
@@ -21,7 +30,7 @@ exe = EXE(pyz,
           a.binaries,
           a.zipfiles,
           a.datas,
-          name='modmap-toolkit',
+          name='modmap-toolkit-' + os_name,
           debug=False,
           strip=False,
           upx=False,

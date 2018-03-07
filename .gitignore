@@ -34,7 +34,7 @@ htmlcov/
 .cache
 nosetests.xml
 coverage.xml
-*,cover
+*.cover
 .hypothesis/
 
 # Translations
@@ -56,3 +56,6 @@ ENV/
 *.DS_Store
 .AppleDouble
 .LSOverride
+
+# Temp files
+*.tmp

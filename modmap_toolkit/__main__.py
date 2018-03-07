@@ -14,7 +14,8 @@ def main():
         description='Generation, analysis, and evaluation tools for Molecular '
                     'Distance Maps.'
     )
-    subparsers = parser.add_subparsers()
+    subparsers = parser.add_subparsers(dest='command')
+    subparsers.required = True
     for cmd, cmd_settings in iteritems(subcommands):
         subparser = subparsers.add_parser(
             cmd, help=cmd_settings['description'],
