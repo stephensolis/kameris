@@ -1,6 +1,7 @@
 from setuptools import setup, find_packages
 from modmap_toolkit import __version__
 from modmap_toolkit.utils.platform_utils import platform_name
+import platform
 
 
 try:
@@ -12,12 +13,12 @@ try:
             self.root_is_pure = False
 
         def get_tag(self):
-            if platform_name() == 'windows':
+            if platform.system() == 'Windows':
                 platform_tag = 'win_amd64'
-            elif platform_name() == 'mac':
-                platform_tag = 'macosx_10_6_intel'
-            elif platform_name() == 'linux':
+            elif platform.system() == 'Linux':
                 platform_tag = 'manylinux1_x86_64'
+            elif platform.system() == 'Darwin':
+                platform_tag = 'macosx_10_6_intel'
             return 'py2.py3', 'none', platform_tag
 except ImportError:
     bdist_wheel = None

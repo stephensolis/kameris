@@ -1,11 +1,14 @@
 from modmap_toolkit.utils.platform_utils import platform_name
-import platform
 
 
 a = Analysis(['modmap-toolkit.py'],
              pathex=[os.getcwd()],
              binaries=[],
-             datas=[],
+             datas=[
+                ('modmap_toolkit/scripts/make_plots.wls', 'modmap_toolkit/scripts'),
+                ('modmap_toolkit/scripts/generation_cgr_' + platform_name() + '_*', 'modmap_toolkit/scripts'),
+                ('modmap_toolkit/scripts/generation_dists_' + platform_name() + '_*', 'modmap_toolkit/scripts')
+             ],
              hiddenimports=[
                  'sklearn.neighbors.typedefs', 'sklearn.neighbors.quad_tree', 'sklearn.tree._utils',
                  'scipy._lib.messagestream',

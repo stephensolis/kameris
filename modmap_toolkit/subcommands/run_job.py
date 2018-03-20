@@ -139,13 +139,6 @@ def preprocess_steps(steps, paths, exp_options):
         elif step_options['type'] == 'classify':
             step_options['metadata_file'] = paths['metadata_output_file']
             make_output_paths(step_options, ['features_file', 'output_file'])
-        elif step_options['type'] == 'plots':
-            step_options['plots_script'] = os.path.join(paths['client_dir'],
-                                                        'make_plots.wls')
-            step_options['metadata_file'] = paths['metadata_output_file']
-            make_output_paths(step_options, [
-                'mds_file', 'classification_file', 'output_file'
-            ])
 
     return steps
 

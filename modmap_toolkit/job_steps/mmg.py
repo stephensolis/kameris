@@ -23,8 +23,10 @@ def executable_suffix():
 
 
 def binary_path(bin_name):
-    return os.path.join(os.path.dirname(__file__), '..', 'scripts',
-                        bin_name + executable_suffix())
+    return os.path.normpath(os.path.join(
+        os.path.dirname(__file__), '..', 'scripts',
+        bin_name + executable_suffix()
+    ))
 
 
 def run_mmg_kmers(options, exp_options):

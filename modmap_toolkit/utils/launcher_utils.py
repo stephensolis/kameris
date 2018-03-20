@@ -33,11 +33,6 @@ def maybe_running_in_shell():
     proc = psutil.Process()
     if platform.system() == 'Windows':
         return not names_match_process_or_parents(proc, ['explorer.exe'])
-    elif platform.system() == 'Linux':
-        return not (names_match_process_or_parents(proc, [
-            'konqueror', 'dolphin', 'krusader', 'nautilus', 'thunar',
-            'pcmanfm', 'caja', 'nemo', 'xfe'
-        ]) or proc.parent().parent().pid == 1)
     else:
         return True
 
@@ -86,13 +81,16 @@ def ensure_running_in_shell(no_shell_message=None):
     used to perform a shell injection."""
 
     if no_shell_message is None:
-        no_shell_message = textwrap.dedent("""
+        if platform.system() == 'Windows':
+            command_line = '{0} --help'
+        else:
+            command_line = './{0} --help'
+        no_shell_message = textwrap.dedent(("""
             {0} is a command-line program, do not double-click it again!
             Type your command in this prompt below.
 
-            If you are not sure what to do, type {0} --help on Windows
-            or ./{0} --help on macOS/Linux.
-        """.format(os.path.basename(sys.argv[0])))
+            If you are not sure what to do, type """ + command_line).format(
+                os.path.basename(sys.argv[0])))
 
     if not maybe_running_in_shell():
         spawn_shell(no_shell_message)

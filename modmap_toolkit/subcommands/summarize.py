@@ -213,8 +213,10 @@ def run(args):
                 )
                 subprocess.call(
                     'wolframscript "{}" {}'.format(
-                        os.path.join(os.path.dirname(__file__),
-                                     '..', 'scripts', 'make_plots.wls'),
+                        os.path.normpath(os.path.join(
+                            os.path.dirname(__file__), '..', 'scripts',
+                            'make_plots.wls'
+                        )),
                         base64.b64encode(json.dumps({
                             'accuracy_type': accuracy_key,
                             'classifier_name': best_stats['classifier'],
