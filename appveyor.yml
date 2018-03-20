@@ -1,0 +1,29 @@
+version: "#{build}"
+
+image: Visual Studio 2017
+
+environment:
+  PATH: C:\msys64\usr\bin;C:\Python36-x64;C:\Python36-x64\Scripts;%PATH%
+
+install:
+  - choco install make
+  - pip install -i https://pypi.anaconda.org/stephensolis/simple numpy scipy
+  - pip install -r test-requirements.txt
+build_script:
+  - make
+test_script:
+  - make test
+
+for:
+  - branches:
+      only:
+        - master
+    environment:
+      GITHUB_TOKEN:
+        secure: sIxqS6E0K6ls6b80KDzkOt8kjcm5jqSioadY6niSncFZ6MwkQSqMUMw+GvQArhEk
+      TWINE_USERNAME:
+        secure: FUTtvAe1Bgl3m+JX6Wjw+g==
+      TWINE_PASSWORD:
+        secure: 9K+w2GDL9+UV8lXgwno5KwVrcEoLovZhyXx4basmxaw=
+    deploy_script:
+      - make distribute

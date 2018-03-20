@@ -1,4 +1,4 @@
-.PHONY: all pip-package bin-package distribute distribute-pip distribute-bin lint install uninstall clean
+.PHONY: all pip-package bin-package distribute distribute-pip distribute-bin test lint install uninstall clean
 
 CLEAN_CMD = bash -c 'rm -rf build dist modmap_toolkit.egg-info && find . -type f \( -name '*.pyc' -o -name '*.pyo' \) -delete'
 VERSION_NUMBER = $(shell python -c 'import modmap_toolkit; print(modmap_toolkit.__version__)')
@@ -18,9 +18,7 @@ endif
 all: pip-package bin-package
 
 pip-package: clean
-	python -m pip install --upgrade setuptools
-	python setup.py sdist
-	python -m pip install --upgrade wheel
+	python -m pip install --upgrade setuptools wheel
 	python setup.py bdist_wheel --universal
 
 bin-package:
@@ -31,7 +29,7 @@ distribute: distribute-pip distribute-bin
 
 distribute-pip: pip-package
 	python -m pip install --upgrade twine
-	python -m twine upload dist/*.whl dist/*.tar.*
+	python -m twine upload dist/*.whl
 
 distribute-bin: bin-package
 	tools/github-release/github-release$(EXE_SUFFIX) upload --user stephensolis --repo modmap-toolkit \
@@ -39,6 +37,8 @@ distribute-bin: bin-package
 															--name modmap-toolkit$(EXE_SUFFIX) \
 															--file dist/modmap-toolkit$(EXE_SUFFIX)
 
+
+test: lint
 
 lint:
 	python -m flake8 modmap_toolkit modmap-toolkit.py setup.py

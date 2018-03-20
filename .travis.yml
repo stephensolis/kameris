@@ -14,7 +14,7 @@ install:
 
 script:
   - make
-  - make lint
+  - make test
 
 jobs:
   include:
@@ -27,7 +27,9 @@ jobs:
       if: branch = master AND type != pull_request
       install:
         - brew upgrade python
+        - unlink /usr/local/bin/python; ln -s /usr/local/bin/python3 /usr/local/bin/python
+        - export PATH=/usr/local/bin:$PATH
         - sudo mkdir -p /usr/local/man
         - sudo chown -R "$USER:admin" /usr/local/man
         - make install
-      script: make distribute-bin
+      script: make distribute

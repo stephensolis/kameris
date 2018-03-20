@@ -5,6 +5,7 @@ import platform
 import x86cpu
 
 from . import command
+from ..utils.platform_utils import platform_name
 
 
 def cpu_suffix():
@@ -14,17 +15,8 @@ def cpu_suffix():
         return 'sse41'
 
 
-def platform_suffix():
-    if platform.system() == 'Windows':
-        return 'windows'
-    elif platform.system() == 'Linux':
-        return 'linux'
-    elif platform.system() == 'Darwin':
-        return 'mac'
-
-
 def executable_suffix():
-    result = '_' + platform_suffix() + '_' + cpu_suffix()
+    result = '_' + platform_name() + '_' + cpu_suffix()
     if platform.system() == 'Windows':
         result += '.exe'
     return result
