@@ -47,6 +47,7 @@ setup(
         'stopit',
         'tabulate',
         'tqdm',
-        'watchtower'
+        'watchtower',
+        'x86cpu'
     ]
 )
