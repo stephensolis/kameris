@@ -1,7 +1,7 @@
 language: python
 os: linux
 dist: trusty
-sudo: false
+sudo: true # required because of SSE4.1 support
 if: tag IS blank
 
 python:
@@ -14,8 +14,8 @@ install:
   - pip install -r test-requirements.txt
 
 script:
+  - make test SEND_COVERAGE=true
   - make
-  - make test
 
 jobs:
   include:

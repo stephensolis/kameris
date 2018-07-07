@@ -243,7 +243,7 @@ def run_classify_step(options, exp_options):
                     )
 
                     # save the model file
-                    if save_model:
+                    if 'generation_options' in options and save_model:
                         # train the model
                         pipeline = build_pipeline(
                             classifier_factory,

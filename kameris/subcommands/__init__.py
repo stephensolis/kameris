@@ -26,6 +26,9 @@ def run_job_setup_args(parser):
     parser.add_argument('--validate-only', action='store_true',
                         help='just validate the settings and job description '
                              "files, but don't run the job")
+    parser.add_argument('--disable-avx', action='store_true',
+                        help='disable AVX optimizations, even if detected '
+                             'as supported by your CPU')
 
 
 def summarize_setup_args(parser):
@@ -48,6 +51,9 @@ def classify_setup_args(parser):
     parser.add_argument('--force-download', action='store_true',
                         help='if the model file has already been downloaded '
                              'and is in the cache, download it again anyway')
+    parser.add_argument('--disable-avx', action='store_true',
+                        help='disable AVX optimizations, even if detected '
+                             'as supported by your CPU')
 
 
 subcommands = {

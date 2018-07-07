@@ -10,31 +10,31 @@ from ..utils import job_utils
 from ..utils.platform_utils import platform_name
 
 
-def cpu_suffix():
-    if x86cpu.cpuid(7)['ebx'] & (1 << 5):
+def cpu_suffix(disable_avx):
+    if not disable_avx and x86cpu.cpuinfo.X86Info().supports_avx2:
         return 'avx2'
     else:
         return 'sse41'
 
 
-def executable_suffix():
-    result = '_' + platform_name() + '_' + cpu_suffix()
+def executable_suffix(disable_avx):
+    result = '_' + platform_name() + '_' + cpu_suffix(disable_avx)
     if platform.system() == 'Windows':
         result += '.exe'
     return result
 
 
-def binary_path(bin_name):
+def binary_path(bin_name, disable_avx):
     return os.path.normpath(os.path.join(
         os.path.dirname(__file__), '..', 'scripts',
-        bin_name + executable_suffix()
+        bin_name + executable_suffix(disable_avx)
     ))
 
 
 def run_backend_kmers(options, exp_options):
     _command.run_command_step({
         'command': '"{}" cgr "{}" "{}" {} {}'.format(
-                        binary_path('generation_cgr'),
+                        binary_path('generation_cgr', options['disable_avx']),
                         options['fasta_output_dir'], options['output_file'],
                         options['k'], options['bits_per_element'])
     }, {})
@@ -59,7 +59,8 @@ def run_backend_kmers(options, exp_options):
 def run_backend_dists(options, exp_options):
     _command.run_command_step({
         'command': '"{}" "{}" "{}" {}'.format(
-                        binary_path('generation_dists'),
+                        binary_path('generation_dists',
+                                    options['disable_avx']),
                         options['input_file'], options['output_prefix'],
                         ','.join(options['distances']))
     }, {})

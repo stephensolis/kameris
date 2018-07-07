@@ -1,0 +1,63 @@
+name: hiv1-lanl-whole
+
+experiments:
+  subtype:
+    expand_options:
+      k: 3..4
+    min_group_pts: 18
+    include_recombinants: true
+    dataset:
+      archive: hiv1
+      archive_folder: lanl-whole
+      metadata: hiv1-lanl-whole
+    selection_key: subtype
+    groups: |
+      lambda options, metadata:
+        import collections
+        counts = collections.Counter(x[options['selection_key']] for x in metadata)
+        return {v: {'selection_key': options['selection_key'], 'values': [v]} for v in counts if v and counts[v] >= options['min_group_pts']}
+
+steps:
+  - type: select
+    copy_for_options: [k]
+    pick_group: |
+      lambda metadata, group_options, options:
+        return [x for x in metadata if (options['include_recombinants'] or not x['recombinant']) and
+                                       x[group_options['selection_key']] in group_options['values']]
+
+  - type: kmers
+    output_file: cgrs.mm-repr
+    mode: frequencies
+    k: from_options
+    bits_per_element: 16
+
+  - type: kmers
+    output_file: cgr-counts.mm-repr
+    mode: counts
+    k: from_options
+    bits_per_element: 16
+
+  - type: distances
+    input_file: cgr-counts.mm-repr
+    output_prefix: dists
+    distances: [manhat]
+
+  - type: mds
+    dists_file: dists-manhat.mm-dist
+    dimensions: 10
+    output_file: mds10-manhat.json
+
+  - type: classify
+    features_file: cgrs.mm-repr
+    output_file: classification-kmers.json
+    validation_count: 3
+    classifiers:
+      - linear-svm
+      - multilayer-perceptron
+
+  - type: classify
+    features_file: dists-manhat.mm-dist
+    output_file: classification-manhat.json
+    validation_count: 2
+    classifiers:
+      - linear-svm

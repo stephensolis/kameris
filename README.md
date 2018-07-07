@@ -21,6 +21,13 @@
         <img src="https://ci.appveyor.com/api/projects/status/7tc4kkrig5xyn4pu?svg=true" alt="Appveyor">
     </a>
     <br>
+    <a href="https://coveralls.io/github/stephensolis/kameris?branch=master">
+        <img src="https://coveralls.io/repos/github/stephensolis/kameris/badge.svg?branch=master" alt="Coveralls">
+    </a>
+    <a href="https://codecov.io/gh/stephensolis/kameris">
+        <img src="https://codecov.io/gh/stephensolis/kameris/branch/master/graph/badge.svg" alt="Codecov">
+    </a>
+    &nbsp;
     <a href="https://www.codacy.com/app/stephensolis/kameris">
         <img src="https://api.codacy.com/project/badge/Grade/2286db6fde1d4b729127f820d7896cd0" alt="Codacy">
     </a>
@@ -53,7 +60,7 @@ Clone this repository then run `make install`.
 
 If you use this software in your research, please cite:
 
-An open-source k-mer based machine learning tool for fast and accurate subtyping of HIV-1 genomes <br>
+**An open-source k-mer based machine learning tool for fast and accurate subtyping of HIV-1 genomes** <br>
 Stephen Solis-Reyes, Mariano Avino, Art Poon, Lila Kari <br>
 https://www.biorxiv.org/content/early/2018/07/05/362780
 
@@ -93,7 +100,7 @@ This was the exact job used to train the models from the previous section, and t
 Now, open `output/hiv1-lanl-whole`. You will notice folders were created for each value of `k`. Within each folder are several files:
 - `fasta` contains the FASTA files extracted from the downloaded dataset used for model training and evaluation.
 - `metadata.json` contains metadata on the FASTA files used to determine the class for each sequence.
-- `cgrs.mm-repr` contains feature vectors for each sequence. See the mentioned paper for more technical details.
+- `cgrs.mm-repr` contains feature vectors for each sequence. See the mentioned paper for more details on the computation of the vectors, and [kameris-formats](https://github.com/stephensolis/kameris-formats) for reader/writer implementations and a description of the file format.
 - `classification-kmers.json` contains evaluation results after using cross-validation on the dataset. See the mentioned paper for more technical details.
 - The `.mm-model` files contain trained models which may be passed to `kameris classify` in order to classify new sequences. **Note** that models trained using Python 2 will not run under Python 3 and vice-versa.
 - `log.txt` is a log file containing all the output printed during job execution.

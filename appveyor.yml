@@ -5,15 +5,19 @@ image: Visual Studio 2017
 
 environment:
   PATH: C:\msys64\usr\bin;C:\Python36-x64;C:\Python36-x64\Scripts;%PATH%
+  CODECOV_TOKEN:
+    secure: GsBtx/x0QYENwhtpRmQDAJ3M7RA5yyT89+k16KnhaBN+kpLtllNHSDFHYlPrHly6
+  COVERALLS_REPO_TOKEN:
+    secure: WGFyqkoql5dunMrFm/AA6sPjUwtNGjQ6QhBoe9gXfb6eWemot6jUjK2GoHsp81+9
 
 install:
   - choco install make
   - pip install -i https://pypi.anaconda.org/stephensolis/simple numpy scipy
   - pip install -r test-requirements.txt
-build_script:
-  - make
+build: off
 test_script:
-  - make test
+  - make test SEND_COVERAGE=true
+  - make
 
 for:
   - branches:
