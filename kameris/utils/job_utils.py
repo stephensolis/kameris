@@ -7,17 +7,11 @@ import re
 import timeit
 
 
-# 'multiline lambda' runner
+# 'multiline lambda' support
 
-lambda_str_cache = {}
-# note! kwargs are not passed to the function! they are used for the
-#   function's execution context!
-def call_string_extended_lambda(func_str, *args, **context):  # NOQA (cache line above)
-    if func_str not in lambda_str_cache:
-        exec(re.sub('^lambda(.*):', 'def func(\\1):', func_str), context)
-        lambda_str_cache[func_str] = context['func']
-
-    return lambda_str_cache[func_str](*args)
+def make_string_extended_lambda(func_str, **context):
+    exec(re.sub('^lambda(.*):', 'def func(\\1):', func_str), context)
+    return context['func']
 
 
 # for formatted log output

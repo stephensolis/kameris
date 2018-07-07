@@ -2,6 +2,7 @@ language: python
 os: linux
 dist: trusty
 sudo: false
+if: tag IS blank
 
 python:
   - "3.6"

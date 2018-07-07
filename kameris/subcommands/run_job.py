@@ -168,10 +168,29 @@ def validate_schema(data, schema_name):
         except Exception as e:
             e.message = ('error while validating {}: {}'
                          .format(schema_name, e.message))
+            raise e
 
 
 def validate_job_options(options):
     validate_schema(options, 'job_options')
+
+    # check lambdas under experiments
+    if isinstance(options['experiments'], six.string_types):
+        job_utils.make_string_extended_lambda(options['experiments'])
+    else:
+        for exp_opts in options['experiments'].values():
+            if isinstance(exp_opts['groups'], six.string_types):
+                job_utils.make_string_extended_lambda(exp_opts['groups'])
+
+    # check select step
+    select_steps = [s for s in options['steps'] if s['type'] == 'select']
+    if len(select_steps) > 1:
+        raise Exception('at most one step of type select is allowed in a job')
+    elif select_steps:
+        select_step = select_steps[0]
+        job_utils.make_string_extended_lambda(select_step['pick_group'])
+        if 'postprocess' in select_step:
+            job_utils.make_string_extended_lambda(select_step['postprocess'])
 
 
 def load_metadata(metadata_dir, name):
@@ -195,24 +214,24 @@ def run(args):
     settings = YAML(typ='safe').load(args.settings_file)
     validate_schema(settings, 'settings')
 
+    if args.validate_only:
+        print('INFO     options files validated successfully')
+        return
+
     local_dirs = settings['local_dirs']
     job_name = job_options['name']
 
     experiments = job_options['experiments']
     if isinstance(experiments, six.string_types):
         paths = experiment_paths(local_dirs, job_name, '')
-        experiments = job_utils.call_string_extended_lambda(
+        experiments = job_utils.make_string_extended_lambda(
             experiments, load_metadata=functools.partial(load_metadata,
                                                          paths['metadata_dir'])
-        )
+        )()
     first_select = next(step for step in job_options['steps'] if
                         step['type'] == 'select')
     experiments = preprocess_experiments(experiments,
                                          first_select.get('copy_for_options'))
-
-    if args.validate_only:
-        print('INFO     options files validated successfully')
-        return
 
     log, formatter = setup_logging(job_name, settings)
 
@@ -233,12 +252,11 @@ def run(args):
                     metadata_name = exp_options['dataset']['metadata']
                     metadata = load_metadata(paths['metadata_dir'],
                                              metadata_name)
-                exp_options['groups'] = job_utils.call_string_extended_lambda(
-                    exp_options['groups'], dict(exp_options, **paths),
-                    metadata,
+                exp_options['groups'] = job_utils.make_string_extended_lambda(
+                    exp_options['groups'],
                     load_metadata=functools.partial(load_metadata,
                                                     paths['metadata_dir'])
-                )
+                )(dict(exp_options, **paths), metadata)
             fs_utils.mkdir_p(paths['output_dir'])
 
             # start file log

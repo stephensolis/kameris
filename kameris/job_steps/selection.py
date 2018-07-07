@@ -58,10 +58,9 @@ def run_select_step(options, exp_options):
                 all_metadata_cache[all_metadata_filename] = all_metadata
 
             # perform selection
-            group_metadata = job_utils.call_string_extended_lambda(
-                options['pick_group'], all_metadata, group_options,
-                exp_options
-            )
+            group_metadata = job_utils.make_string_extended_lambda(
+                options['pick_group']
+            )(all_metadata, group_options, exp_options)
             for metadata_entry in group_metadata:
                 metadata_entry['group'] = group_name
                 pick_group_metadata.append(metadata_entry)
@@ -115,10 +114,9 @@ def run_select_step(options, exp_options):
             # run postprocess if required
             if 'postprocess' in options:
                 new_metadata, sequences_list = zip(
-                    *job_utils.call_string_extended_lambda(
-                        options['postprocess'], metadata_entry, file_sequences,
-                        exp_options
-                    )
+                    *job_utils.make_string_extended_lambda(
+                        options['postprocess']
+                     )(metadata_entry, file_sequences, exp_options)
                 )
             else:
                 new_metadata = [metadata_entry]

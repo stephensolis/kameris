@@ -1,4 +1,158 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
-    "type": "object"
+
+    "type": "object",
+    "properties": {
+        "name": {"type": "string"},
+        "random_seed": {"type": "integer"},
+        "experiments": {
+            "oneOf": [
+                {"$ref": "#/definitions/lambda"},
+                {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                            "dataset": {"$ref": "#/definitions/dataset"},
+                            "expand_options": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "oneOf": [
+                                        {
+                                            "type": "array",
+                                            "minItems": 1
+                                        },
+                                        {
+                                            "type": "string",
+                                            "pattern": "[0-9]+\\.\\.[0-9]+"
+                                        }
+                                    ]
+                                }
+                            },
+                            "groups": {
+                                "oneOf": [
+                                    {"$ref": "#/definitions/lambda"},
+                                    {
+                                        "type": "object",
+                                        "additionalProperties": {
+                                            "type": "object",
+                                            "properties": {
+                                                "dataset": {"$ref": "#/definitions/dataset"}
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                        "required": ["groups"]
+                    }
+                }
+            ]
+        },
+        "steps": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "oneOf": [
+                    {
+                        "properties": {
+                            "type": {"enum": ["select"]},
+                            "copy_for_options": {
+                                "type": "array",
+                                "items": {"type": "string"}
+                            },
+                            "pick_group": {"$ref": "#/definitions/lambda"},
+                            "postprocess": {"$ref": "#/definitions/lambda"}
+                        },
+                        "additionalProperties": false,
+                        "required": ["type", "pick_group"]
+                    },
+                    {
+                        "properties": {
+                            "type": {"enum": ["kmers"]},
+                            "output_file": {"type": "string"},
+                            "k": {
+                                "oneOf": [
+                                    {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 32
+                                    },
+                                    {"enum": ["from_options"]}
+                                ]
+                            },
+                            "bits_per_element": {"enum": [16, 32]}
+                        },
+                        "additionalProperties": false,
+                        "required": ["type", "output_file", "k", "bits_per_element"]
+                    },
+                    {
+                        "properties": {
+                            "type": {"enum": ["distances"]},
+                            "input_file": {"type": "string"},
+                            "output_prefix": {"type": "string"},
+                            "distances": {
+                                "type": "array",
+                                "items": {"enum": ["manhat", "info"]},
+                                "minItems": 1
+                            }
+                        },
+                        "additionalProperties": false,
+                        "required": ["type", "input_file", "output_prefix", "distances"]
+                    },
+                    {
+                        "properties": {
+                            "type": {"enum": ["mds"]},
+                            "dists_file": {"type": "string"},
+                            "output_file": {"type": "string"},
+                            "dimensions": {
+                                "type": "integer",
+                                "minimum": 1
+                            }
+                        },
+                        "additionalProperties": false,
+                        "required": ["type", "dists_file", "output_file", "dimensions"]
+                    },
+                    {
+                        "properties": {
+                            "type": {"enum": ["classify"]},
+                            "features_file": {"type": "string"},
+                            "output_file": {"type": "string"},
+                            "validation_count": {
+                                "type": "integer",
+                                "minimum": 1
+                            },
+                            "classifiers": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                                "minItems": 1
+                            }
+                        },
+                        "additionalProperties": false,
+                        "required": ["type", "features_file", "output_file", "validation_count", "classifiers"]
+                    }
+                ]
+            },
+            "minItems": 1
+        }
+    },
+    "additionalProperties": false,
+    "required": ["name", "experiments", "steps"],
+
+    "definitions": {
+        "dataset": {
+            "type": "object",
+            "properties": {
+                "archive": {"type": "string"},
+                "archive_folder": {"type": "string"},
+                "metadata": {"type": "string"}
+            },
+            "additionalProperties": false,
+            "required": ["archive", "metadata"]
+        },
+        "lambda": {
+            "type": "string",
+            "pattern": "^lambda.*:"
+        }
+    }
 }

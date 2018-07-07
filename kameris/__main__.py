@@ -43,8 +43,9 @@ def main():
         run_module.run(args)
     except Exception as e:
         log = logging.getLogger('kameris')
-        message = ('an unexpected error occurred: ' +
-                   (e.message or type(e).__name__))
+        message = 'an unexpected error occurred: {}: {}'.format(
+            type(e).__name__, e.message or str(e)
+        )
         if log.handlers:
             log.error(message)
         else:
