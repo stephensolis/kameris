@@ -71,6 +71,7 @@
                         "properties": {
                             "type": {"enum": ["kmers"]},
                             "output_file": {"type": "string"},
+                            "mode": {"enum": ["counts", "frequencies"]},
                             "k": {
                                 "oneOf": [
                                     {
@@ -84,7 +85,7 @@
                             "bits_per_element": {"enum": [16, 32]}
                         },
                         "additionalProperties": false,
-                        "required": ["type", "output_file", "k", "bits_per_element"]
+                        "required": ["type", "output_file", "k", "bits_per_element", "mode"]
                     },
                     {
                         "properties": {
@@ -118,7 +119,20 @@
                             "type": {"enum": ["classify"]},
                             "features_file": {"type": "string"},
                             "output_file": {"type": "string"},
+                            "skip_normalization": {"type": "boolean"},
+                            "save_model": {"type": "boolean"},
                             "validation_count": {
+                                "type": "integer",
+                                "minimum": 1
+                            },
+                            "dim_reduce_fraction": {
+                                "type": "number",
+                                "minimum": 0,
+                                "exclusiveMinimum": true,
+                                "maximum": 1,
+                                "exclusiveMaximum": true
+                            },
+                            "timeout": {
                                 "type": "integer",
                                 "minimum": 1
                             },

@@ -1,76 +1,95 @@
 from __future__ import absolute_import, division, unicode_literals
 
-from sklearn.decomposition import TruncatedSVD
-from sklearn.preprocessing import StandardScaler
-import sklearn.metrics
-
 from collections import defaultdict
 import json
 import logging
 import kameris_formats
 import numpy as np
+import os
 import scipy.sparse as sparse
 from six import iteritems
 from six.moves import range, zip
 import stopit
 import timeit
 
+import sklearn
+from sklearn.decomposition import TruncatedSVD
+from sklearn.externals import joblib
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+
 from ._classifiers import classifiers_by_name
 from ..utils import job_utils
 
 
-def classification_run(predictor_factory, features, point_classes, all_classes,
-                       train_indexes, test_indexes, normalize_features=True):
-    num_features = int(sum(np.count_nonzero(f) for f in features) /
-                       len(features))
+def avg_num_nonzero_entries(features):
+    return int(sum(np.count_nonzero(f) for f in features) / len(features))
+
+
+def build_pipeline(classifier_factory, num_features, options):
+    normalize_features = not options.get('skip_normalization', False)
+    dim_reduce_fraction = options.get('dim_reduce_fraction', 0.1)
+
+    # setup normalizers if needed
+    normalizers = []
+    if normalize_features:
+        # scale each feature dimension to unit variance
+        # note mean scaling won't work with sparse vectors
+        # it seems obvious to move this after the SVD but that reduces
+        #   classifier performance substantially
+        normalizers.append(('scaler', StandardScaler(with_mean=False)))
+
+        # reduce dimensionality to some fraction of its original
+        normalizers.append(
+            ('dim_reducer',
+             TruncatedSVD(n_components=int(
+                np.ceil(num_features * dim_reduce_fraction)
+             )))
+        )
+
+    return Pipeline(normalizers + [('classifier', classifier_factory())])
+
+
+def classification_run(classifier_factory, features, point_classes,
+                       unique_classes, train_indexes, test_indexes, options):
     num_test_points = len(test_indexes)
     train_classes = point_classes[train_indexes]
     test_realclasses = point_classes[test_indexes]
 
+    # split training and testing feature vectors
     train_features = [features[i] for i in train_indexes]
     test_features = [features[i] for i in test_indexes]
     if sparse.issparse(train_features[0]):
         train_features = sparse.vstack(train_features, format='csr')
         test_features = sparse.vstack(test_features, format='csr')
 
-    if normalize_features:
-        # scale each feature dimension to unit variance
-        # note mean scaling won't work with sparse vectors
-        # it seems obvious to move this after the SVD but that reduces
-        #   classifier performance substantially
-        normalizer = StandardScaler(with_mean=False)
-        train_features = normalizer.fit_transform(train_features)
-        test_features = normalizer.transform(test_features)
-
-        # reduce dimensionality to 1/10 of its original
-        # TODO: make this adjustable
-        dim_reducer = TruncatedSVD(n_components=int(np.ceil(num_features/10)))
-        train_features = dim_reducer.fit_transform(train_features)
-        test_features = dim_reducer.transform(test_features)
-
-    predictor = predictor_factory()
+    # train model
+    pipeline = build_pipeline(classifier_factory,
+                              avg_num_nonzero_entries(features), options)
     start_time = timeit.default_timer()
-    predictor.fit(train_features, train_classes)
+    pipeline.fit(train_features, train_classes)
     train_end_time = timeit.default_timer()
 
-    if hasattr(predictor, 'predict_proba'):
-        test_expprobs = predictor.predict_proba(test_features)
+    # run predictions and compute rankings
+    if hasattr(pipeline, 'predict_proba'):
+        test_expprobs = pipeline.predict_proba(test_features)
         test_end_time = timeit.default_timer()
 
-        num_topN = len(predictor.classes_) - 1
+        num_topN = len(pipeline.classes_) - 1
         test_expclasses_ranked = [[c for (p, c) in
                                    sorted(zip(test_expprobs[i],
-                                              predictor.classes_),
+                                              pipeline.classes_),
                                           reverse=True)]
                                   for i in range(num_test_points)]
         test_expclasses = [c[0] for c in test_expclasses_ranked]
     else:
-        test_expclasses = predictor.predict(test_features)
+        test_expclasses = pipeline.predict(test_features)
         test_end_time = timeit.default_timer()
 
         num_topN = 1
         test_expclasses_ranked = [[c] for c in test_expclasses]
 
+    # separate top-N results
     topN_results = {}
     for n in range(1, num_topN+1):
         misclassified_indexes = [test_indexes[i] for i in
@@ -82,46 +101,52 @@ def classification_run(predictor_factory, features, point_classes, all_classes,
             'accuracy': 1 - (len(misclassified_indexes)/num_test_points)
         }
 
+    # compute and return stats
     stats = {
         'confusion_matrix': sklearn.metrics.confusion_matrix(
-            test_realclasses, test_expclasses, labels=all_classes
+            test_realclasses, test_expclasses, labels=unique_classes
         ),
         'topN_results': topN_results,
         'train_time': train_end_time - start_time,
         'test_time': test_end_time - train_end_time
     }
-    if hasattr(predictor, 'n_iter_'):
-        stats['iterations'] = predictor.n_iter_
-    if normalize_features:
-        stats['reduced_variance_ratio'] = \
-            np.sum(dim_reducer.explained_variance_ratio_)
+    if hasattr(pipeline, 'n_iter_'):
+        stats['iterations'] = pipeline.n_iter_
+    if 'dim_reducer' in pipeline.named_steps:
+        stats['reduced_variance_ratio'] = np.sum(
+            pipeline.named_steps['dim_reducer'].explained_variance_ratio_
+        )
     return stats
 
 
-def crossvalidation_run(predictor_factory, features, point_classes,
-                        all_classes, validation_count, mode='features',
-                        normalize_features=True):
+def crossvalidation_run(classifier_factory, features, features_mode,
+                        point_classes, unique_classes, options):
+    # perform validation group splitting
+    validation_count = options['validation_count']
     num_points = len(point_classes)
     validation_indexes = np.array_split(np.random.permutation(num_points),
                                         validation_count)
 
+    # setup storage for accuracy/stats
     totals = defaultdict(int)
     topN_totals = defaultdict(lambda: {
         'accuracy': 0,
         'misclassified_indexes': set()
     })
 
+    # train classifier and update stats
     for test_indexes in validation_indexes:
         train_indexes = list(set(range(num_points)).difference(test_indexes))
 
-        if mode == 'dists':
+        if features_mode == 'dists':
             real_features = features[:, train_indexes]
         else:
             real_features = features
 
-        stats = classification_run(predictor_factory, real_features,
-                                   point_classes, all_classes, train_indexes,
-                                   test_indexes)
+        stats = classification_run(
+            classifier_factory, real_features, point_classes, unique_classes,
+            train_indexes, test_indexes, options
+        )
 
         totals['confusion_matrix'] += stats['confusion_matrix']
         totals['train_time'] += stats['train_time']
@@ -136,8 +161,9 @@ def crossvalidation_run(predictor_factory, features, point_classes,
                 results['misclassified_indexes']
             )
 
+    # compute and return summary stats
     final_stats = {
-        'classes': all_classes,
+        'classes': unique_classes,
         'confusion_matrix': totals['confusion_matrix'],
         'train_time': totals['train_time'] / validation_count,
         'test_time': totals['test_time'] / validation_count
@@ -173,12 +199,10 @@ class NumpyJSONEncoder(json.JSONEncoder):
 
 def run_classify_step(options, exp_options):
     log = logging.getLogger('kameris.classify')
+    classifier_names = options['classifiers']
+    save_model = options.get('save_model', True)
 
-    if options['classifiers'] == 'all':
-        classifier_names = classifiers_by_name.keys()
-    else:
-        classifier_names = options['classifiers']
-
+    # import features
     features_filename = options['features_file']
     if features_filename.endswith('.mm-dist'):
         features = kameris_formats.dist_reader \
@@ -194,45 +218,66 @@ def run_classify_step(options, exp_options):
     else:
         raise Exception("Unknown type for file '{}'".format(features_filename))
 
+    # load classes from metadata
     with open(options['metadata_file'], 'r') as infile:
         metadata = json.load(infile)
     point_classes = np.array([x['group'] for x in metadata])
-    all_classes = sorted(set(x['group'] for x in metadata))
+    unique_classes = sorted(set(x['group'] for x in metadata))
 
-    if options['validation_count'] == 'one-out':
-        validation_count = len(metadata)
-    else:
-        validation_count = options['validation_count']
-
-    if 'skip_normalization' not in options:
-        normalize_features = True
-    else:
-        normalize_features = not options['skip_normalization']
-
+    # run classifiers and obtain results
     results = {}
     for i, classifier_name in enumerate(classifier_names):
         with job_utils.log_step(
                  "classifier '{}' ({}/{})".format(classifier_name, i+1,
                                                   len(classifier_names))):
-            timeout_seconds = 600  # TODO: make this an options key?
+            timeout = options.get('timeout', 600)
             try:
-                with stopit.ThreadingTimeout(seconds=timeout_seconds,
+                with stopit.ThreadingTimeout(seconds=timeout,
                                              swallow_exc=False):
+                    classifier_factory = classifiers_by_name[classifier_name]
+
+                    # compute cross-validation results
                     results[classifier_name] = crossvalidation_run(
-                        classifiers_by_name[classifier_name], features,
-                        point_classes, all_classes, validation_count,
-                        mode=features_mode,
-                        normalize_features=normalize_features
+                        classifier_factory, features, features_mode,
+                        point_classes, unique_classes, options
                     )
+
+                    # save the model file
+                    if save_model:
+                        # train the model
+                        pipeline = build_pipeline(
+                            classifier_factory,
+                            avg_num_nonzero_entries(features), options
+                        )
+                        pipeline.fit(features, point_classes)
+
+                        # save the model
+                        model_data = {
+                            'sklearn_version': sklearn.__version__,
+                            'generation_options':
+                                options['generation_options'],
+                            'predictor': pipeline
+                        }
+                        model_file = os.path.join(
+                            os.path.dirname(options['output_file']),
+                            '{}_{}.mm-model'.format(
+                                os.path.splitext(
+                                    os.path.basename(options['output_file'])
+                                )[0],
+                                classifier_name
+                            )
+                        )
+                        joblib.dump(model_data, model_file)
             except stopit.TimeoutException:
                 log.warning(
                     '*** classifier run timed out after ~%d seconds, skipping',
-                    timeout_seconds
+                    timeout
                 )
             except Exception as e:
                 log.warning(
                     "*** classifier run failed with error '%s', skipping", e
                 )
 
+    # write results
     with open(options['output_file'], 'w') as outfile:
         json.dump(results, outfile, cls=NumpyJSONEncoder)

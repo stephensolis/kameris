@@ -70,6 +70,7 @@ setup(
     },
     install_requires=[
         'appdirs',
+        'backports.tempfile',
         'jsonschema',
         'kameris-formats',
         'numpy',

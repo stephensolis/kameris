@@ -8,7 +8,7 @@ import os
 import re
 from six import iteritems
 import subprocess
-import tabulate
+from tabulate import tabulate
 
 from ..job_steps._classifiers import classifier_names
 from ..utils import fs_utils
@@ -18,10 +18,6 @@ all_classifiers = set(classifier_names)
 
 
 def natural_sort_key(string):
-    """Given a string, produces a key suitable for use in sorted() which will
-    put the string in natural order.
-
-    Taken from http://www.codinghorror.com/blog/archives/001018.html"""
     return [int(s) if s.isdigit() else s for s in re.split(r'(\d+)', string)]
 
 
@@ -161,14 +157,14 @@ def run(args):
         print('Best accuracy: {accuracy:.2f}% (k={k}, {dist}, {classifier})'
               .format(**best_stats))
         print('Confusion matrix:')
-        print(tabulate.tabulate(
+        print(tabulate(
             best_stats['confusion_matrix']
         ))
         print()
 
         best_by_k = curr_stats['best_classifier_by_k']
         print('Best classifier by k:')
-        print(tabulate.tabulate(
+        print(tabulate(
             [[k] + [val for dist_name in curr_stats['dists']
                     for val in ([best_by_k[dist_name][k]['accuracy'],
                                  best_by_k[dist_name][k]['classifier']]
@@ -187,7 +183,7 @@ def run(args):
                                for c in classifier_results.keys())
         print('Classifiers for k={}:'
               .format(best_stats['k']))
-        print(tabulate.tabulate(
+        print(tabulate(
             [[c] + [best_for_k[dist_name][c]
                     if c in best_for_k[dist_name] else 'N/A'
                     for dist_name in curr_stats['dists']]
@@ -238,7 +234,7 @@ def run(args):
 
     print()
     print('Experiment summary:')
-    print(tabulate.tabulate(
+    print(tabulate(
         [[exp_name, run_stats[exp_name]['best_classifier']['accuracy'],
           'k={k}, {dist}, {classifier}'
           .format(**run_stats[exp_name]['best_classifier'])]

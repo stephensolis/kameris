@@ -109,6 +109,16 @@ def preprocess_steps(steps, paths, exp_options):
         elif step_options['type'] == 'classify':
             step_options['metadata_file'] = paths['metadata_output_file']
             make_output_paths(step_options, ['features_file', 'output_file'])
+            generation_opts = next(
+                (step for step in steps if step['type'] == 'kmers' and
+                 step['output_file'] == step_options['features_file']),
+                None
+            )
+            if generation_opts:
+                step_options['generation_options'] = {
+                    k: generation_opts[k] for k in
+                    {'mode', 'k', 'bits_per_element'}
+                }
 
     return steps
 
