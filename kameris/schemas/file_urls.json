@@ -2,19 +2,33 @@
     "$schema": "http://json-schema.org/draft-04/schema#",
     "type": "object",
     "properties": {
-        "metadata": {"$ref": "#/definitions/url_list"},
-        "archives": {"$ref": "#/definitions/url_list"},
-        "models": {"$ref": "#/definitions/url_list"}
+        "metadata": {
+            "type": "object",
+            "additionalProperties": {"$ref": "#/definitions/url"}
+        },
+        "archives": {
+            "type": "object",
+            "additionalProperties": {"$ref": "#/definitions/url"}
+        },
+        "models": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "object",
+                "properties": {
+                    "python2": {"$ref": "#/definitions/url"},
+                    "python3": {"$ref": "#/definitions/url"}
+                },
+                "additionalProperties": false,
+                "required": ["python2", "python3"]
+            }
+        }
     },
     "additionalProperties": false,
 
     "definitions": {
-        "url_list": {
-            "type": "object",
-            "additionalProperties": {
-                "type": "string",
-                "pattern": "http(s)?://.*"
-            }
+        "url": {
+            "type": "string",
+            "pattern": "http(s)?://.*"
         }
     }
 }

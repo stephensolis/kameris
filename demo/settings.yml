@@ -2,11 +2,11 @@
 # this is required
 local_dirs:
   # the directory containing zipped datasets
-  archives: /data/archives
+  archives: data
   # the directory containing JSON metadata files
-  metadata: /data/metadata
+  metadata: data
   # the directory for storage of job output
-  output: /data/output
+  output: output
 
 # if desired, specifies an external service to use for logging
 # this is optional

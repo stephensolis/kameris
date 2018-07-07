@@ -1,0 +1,53 @@
+name: hiv1-lanl-whole
+
+experiments:
+  subtype:
+    expand_options:
+      k: 5..6
+    min_group_pts: 18
+    include_recombinants: true
+    dataset:
+      archive: hiv1
+      archive_folder: lanl-whole
+      metadata: hiv1-lanl-whole
+    selection_key: subtype
+    groups: |
+      lambda options, metadata:
+        import collections
+        counts = collections.Counter(x[options['selection_key']] for x in metadata)
+        return {v: {'selection_key': options['selection_key'], 'values': [v]} for v in counts if v and counts[v] >= options['min_group_pts']}
+
+steps:
+  - type: select
+    copy_for_options: [k]
+    pick_group: |
+      lambda metadata, group_options, options:
+        return [x for x in metadata if (options['include_recombinants'] or not x['recombinant']) and
+                                       x[group_options['selection_key']] in group_options['values']]
+
+  - type: kmers
+    output_file: cgrs.mm-repr
+    mode: frequencies
+    k: from_options
+    bits_per_element: 16
+
+  - type: classify
+    features_file: cgrs.mm-repr
+    output_file: classification-kmers.json
+    validation_count: 10
+    classifiers:
+      #- 10-nearest-neighbors
+      #- nearest-centroid-mean
+      #- nearest-centroid-median
+      #- logistic-regression
+      #- sgd
+      - linear-svm
+      #- quadratic-svm
+      #- cubic-svm
+      #- decision-tree
+      #- random-forest
+      #- adaboost
+      #- gaussian-naive-bayes
+      #- lda
+      #- qda
+      - multilayer-perceptron

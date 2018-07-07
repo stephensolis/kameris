@@ -25,7 +25,7 @@ def run(args):
             model_url = args.model
         else:
             model_url = download_utils.url_for_file(args.model + '.mm-model',
-                                                    args.urls_file, 'model')
+                                                    args.urls_file, 'models')
         model_file = download_utils.open_url_cached(model_url, 'rb',
                                                     args.force_download)
 
