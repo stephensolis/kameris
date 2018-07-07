@@ -1,3 +1,6 @@
 -e .
 
+dotmap
 flake8
+pytest
+pytest-cov

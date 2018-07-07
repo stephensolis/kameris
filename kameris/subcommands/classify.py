@@ -43,7 +43,8 @@ def run(args):
         with tempfile.TemporaryDirectory() as temp_dir:
             cgrs_file = os.path.join(temp_dir, 'cgrs.mm-repr')
             options = dict(model_data['generation_options'],
-                           fasta_output_dir=args.files, output_file=cgrs_file)
+                           fasta_output_dir=args.files, output_file=cgrs_file,
+                           disable_avx=args.disable_avx)
             backend.run_backend_kmers(options, {})
 
             cgrs = []

@@ -13,7 +13,7 @@ install:
 build_script:
   - make
 test_script:
-  - make test
+  - make test SEND_COVERAGE=true
 
 for:
   - branches:

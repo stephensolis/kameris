@@ -15,6 +15,9 @@ def mkdir_p(path):
 
 
 def symlink(src, dest):
+    src = os.path.abspath(src)
+    dest = os.path.abspath(dest)
+
     if platform.system() == 'Windows':
         if os.path.isdir(src):
             subprocess.check_output('mklink /j "{}" "{}"'.format(dest, src),

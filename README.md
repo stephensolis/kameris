@@ -21,6 +21,13 @@
         <img src="https://ci.appveyor.com/api/projects/status/7tc4kkrig5xyn4pu?svg=true" alt="Appveyor">
     </a>
     <br>
+    <a href="https://coveralls.io/github/stephensolis/kameris?branch=master">
+        <img src="https://coveralls.io/repos/github/stephensolis/kameris/badge.svg?branch=master" alt="Coveralls">
+    </a>
+    <a href="https://codecov.io/gh/stephensolis/kameris">
+        <img src="https://codecov.io/gh/stephensolis/kameris/branch/master/graph/badge.svg" alt="Codecov">
+    </a>
+    &nbsp;
     <a href="https://www.codacy.com/app/stephensolis/kameris">
         <img src="https://api.codacy.com/project/badge/Grade/2286db6fde1d4b729127f820d7896cd0" alt="Codacy">
     </a>
@@ -53,7 +60,7 @@ Clone this repository then run `make install`.
 
 If you use this software in your research, please cite:
 
-An open-source k-mer based machine learning tool for fast and accurate subtyping of HIV-1 genomes <br>
+**An open-source k-mer based machine learning tool for fast and accurate subtyping of HIV-1 genomes** <br>
 Stephen Solis-Reyes, Mariano Avino, Art Poon, Lila Kari <br>
 https://www.biorxiv.org/content/early/2018/07/05/362780
 
