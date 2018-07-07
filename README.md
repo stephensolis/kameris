@@ -18,7 +18,7 @@
         <img src="https://travis-ci.org/stephensolis/kameris.svg?branch=master" alt="Travis">
     </a>
     <a href="https://ci.appveyor.com/project/stephensolis/kameris">
-        <img src="https://ci.appveyor.com/api/projects/status/v22hru9wvvdhsv8q?svg=true" alt="Appveyor">
+        <img src="https://ci.appveyor.com/api/projects/status/7tc4kkrig5xyn4pu?svg=true" alt="Appveyor">
     </a>
     &nbsp;
     <a href="https://www.codacy.com/app/stephensolis/kameris">

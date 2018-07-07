@@ -1,0 +1,30 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+        "local_dirs": {
+            "type": "object",
+            "properties": {
+                "archives": {"type": "string"},
+                "metadata": {"type": "string"},
+                "output": {"type": "string"}
+            },
+            "additionalProperties": false,
+            "required": ["archives", "metadata", "output"]
+        },
+        "remote_logging": {
+            "type": "object",
+            "properties": {
+                "destination": {"type": "string"},
+                "log_group": {"type": "string"},
+                "region": {"type": "string"},
+                "aws_key": {"type": "string"},
+                "aws_secret": {"type": "string"}
+            },
+            "additionalProperties": false,
+            "required": ["destination", "log_group", "region", "aws_key", "aws_secret"]
+        }
+    },
+    "additionalProperties": false,
+    "required": ["local_dirs"]
+}

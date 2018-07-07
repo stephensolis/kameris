@@ -22,11 +22,11 @@ def argparse_check_dir(path):
 def run_job_setup_args(parser):
     parser.add_argument('job_file', type=argparse.FileType('r'),
                         help='job description YAML file')
-    parser.add_argument('settings_files', nargs='+',
-                        type=argparse.FileType('r'),
-                        help='run settings YAML files (in case of duplicated '
-                             'settings keys, the one in the last file takes '
-                             'priority)')
+    parser.add_argument('settings_file', type=argparse.FileType('r'),
+                        help='program settings YAML file')
+    parser.add_argument('--validate-only', action='store_true',
+                        help='just validate the settings and job description '
+                             "files, but don't run the job")
 
 
 def summarize_setup_args(parser):

@@ -1,6 +1,5 @@
 from __future__ import absolute_import, division, unicode_literals
 
-import copy
 import json
 import os
 from six import iteritems
@@ -15,6 +14,22 @@ from ..utils import file_formats, fs_utils, job_utils
 
 
 def run_select_step(options, exp_options):
+    # if files are to be copied, copy them
+    selection_copy_from = exp_options.get('selection_copy_from')
+    if selection_copy_from:
+        def symlink_file(filename):
+            fs_utils.symlink(
+                os.path.join(options['output_dir'], '..', selection_copy_from,
+                             filename),
+                os.path.join(options['output_dir'], filename)
+            )
+
+        with job_utils.log_step("copying files from experiment '{}'"
+                                .format(selection_copy_from)):
+            symlink_file('fasta')
+            symlink_file('metadata.json')
+        return
+
     groups = exp_options['groups'].copy()
 
     # run pick_group
@@ -44,9 +59,8 @@ def run_select_step(options, exp_options):
 
             # perform selection
             group_metadata = job_utils.call_string_extended_lambda(
-                options['pick_group'],
-                copy.deepcopy(all_metadata),
-                copy.deepcopy(group_options)
+                options['pick_group'], all_metadata, group_options,
+                exp_options
             )
             for metadata_entry in group_metadata:
                 metadata_entry['group'] = group_name
@@ -102,8 +116,8 @@ def run_select_step(options, exp_options):
             if 'postprocess' in options:
                 new_metadata, sequences_list = zip(
                     *job_utils.call_string_extended_lambda(
-                        options['postprocess'],
-                        copy.deepcopy(metadata_entry), file_sequences
+                        options['postprocess'], metadata_entry, file_sequences,
+                        exp_options
                     )
                 )
             else:

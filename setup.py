@@ -57,6 +57,7 @@ setup(
     packages=find_packages(),
     package_data={
         'kameris': [
+            'schemas/*',
             'scripts/make_plots.wls',
             'scripts/generation_cgr_' + platform_name() + '_*',
             'scripts/generation_dists_' + platform_name() + '_*'
@@ -68,6 +69,7 @@ setup(
         ]
     },
     install_requires=[
+        'jsonschema',
         'kameris-formats',
         'numpy',
         'ruamel.yaml',

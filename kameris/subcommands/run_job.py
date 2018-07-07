@@ -4,7 +4,10 @@ from __future__ import (
 import boto3
 import collections
 import copy
+import functools
 import itertools
+import json
+import jsonschema
 import logging
 import os
 import random
@@ -18,14 +21,6 @@ import watchtower
 
 from ..job_steps import step_runners
 from ..utils import fs_utils, job_utils
-
-
-def make_aws_args(settings):
-    return {
-        'aws_access_key_id': settings['aws_key'],
-        'aws_secret_access_key': settings['aws_secret'],
-        'region_name': settings['region']
-    }
 
 
 def experiment_paths(local_dirs, job_name, exp_name):
@@ -44,8 +39,8 @@ def experiment_paths(local_dirs, job_name, exp_name):
     }
 
 
-def preprocess_experiments(experiments):
-    def inflate_option_vals(option_vals):
+def preprocess_experiments(experiments, select_copy_for_options):
+    def inflate_expand_option(option_vals):
         if isinstance(option_vals, six.string_types):
             [start, end] = option_vals.split('..')
             return range(int(start), int(end)+1)
@@ -61,30 +56,33 @@ def preprocess_experiments(experiments):
     final_experiments = collections.OrderedDict()
     for exp_name, exp_options in iteritems(experiments):
         if 'expand_options' in exp_options:
-            clean_exp_options = exp_options.copy()
-            clean_exp_options.pop('expand_options')
+            nonexpanded_options = exp_options.copy()
+            nonexpanded_options.pop('expand_options')
 
             expand_options = exp_options['expand_options']
-            expand_option_values = itertools.product(*(
+            expand_values = list(itertools.product(*(
                 [(option_key, option_val)
-                 for option_val in inflate_option_vals(option_vals)]
+                 for option_val in inflate_expand_option(option_vals)]
                 for (option_key, option_vals) in iteritems(expand_options)
-                if option_key != 'no_copy'
-            ))
+            )))
 
-            for i, exp_option_values in enumerate(expand_option_values):
+            for expanded_options in expand_values:
                 new_exp_name = exp_name_with_options(exp_name,
-                                                     exp_option_values)
-                new_exp_options = dict(exp_option_values, **clean_exp_options)
-                if i == 0:
-                    first_new_exp_name = new_exp_name
-                elif ('no_copy' not in expand_options or
-                        not expand_options['no_copy']):
-                    new_exp_options['copy'] = {
-                        'from': first_new_exp_name,
-                        'files': ['fasta', 'metadata.json'],
-                        'skip': ['select', 'retrieve']
-                    }
+                                                     expanded_options)
+                new_exp_options = dict(expanded_options, **nonexpanded_options)
+
+                # handle selection copy_for_options
+                if select_copy_for_options:
+                    sliced_options = [o for o in expanded_options if
+                                      o[0] not in select_copy_for_options]
+                    for opts in expand_values:
+                        if opts == expanded_options:
+                            break
+                        elif all(o in opts for o in sliced_options):
+                            new_exp_options['selection_copy_from'] = \
+                                exp_name_with_options(exp_name, opts)
+                            break
+
                 final_experiments[new_exp_name] = new_exp_options
         else:
             final_experiments[exp_name] = exp_options
@@ -93,45 +91,20 @@ def preprocess_experiments(experiments):
 
 
 def preprocess_steps(steps, paths, exp_options):
-    string_substitutions = dict(exp_options, **paths)
-
-    def perform_on_options_keys(func, options, keys):
-        for key in keys:
-            if key in options:
-                if isinstance(options[key], list):
-                    options[key] = [func(x) for x in options[key]]
-                else:
-                    options[key] = func(options[key])
-
-    def do_option_substitutions(options, keys):
-        perform_on_options_keys(lambda s: s.format(**string_substitutions),
-                                options, keys)
-
     def make_output_paths(options, keys):
-        do_option_substitutions(options, keys)
-        perform_on_options_keys(lambda p: (p if os.path.isabs(p)
-                                           else os.path.join(
-                                               paths['output_dir'], p
-                                           )),
-                                options, keys)
+        for key in keys:
+            if key in options and not os.path.isabs(options[key]):
+                options[key] = os.path.join(paths['output_dir'], options[key])
 
     steps = copy.deepcopy(steps)
     for step_options in steps:
         if step_options['type'] == 'select':
-            do_option_substitutions(step_options, [
-                'pick_group', 'postprocess'
-            ])
-            step_options['archives_dir'] = paths['archives_dir']
-            step_options['metadata_dir'] = paths['metadata_dir']
-            step_options['fasta_output_dir'] = paths['fasta_output_dir']
-            step_options['metadata_output_file'] = \
-                paths['metadata_output_file']
-        elif step_options['type'] == 'command':
-            do_option_substitutions(step_options, ['command'])
+            step_options.update(paths)
         elif step_options['type'] == 'kmers':
             step_options['fasta_output_dir'] = paths['fasta_output_dir']
+            if step_options['k'] == 'from_options':
+                step_options['k'] = exp_options['k']
             make_output_paths(step_options, ['output_file'])
-            do_option_substitutions(step_options, ['k'])
         elif step_options['type'] == 'distances':
             make_output_paths(step_options, ['input_file', 'output_prefix'])
         elif step_options['type'] == 'mds':
@@ -143,41 +116,12 @@ def preprocess_steps(steps, paths, exp_options):
     return steps
 
 
-def run_experiment_copy(copy_options, paths, local_dirs, job_name):
-    with job_utils.log_step("copying files from experiment '{}'"
-                            .format(copy_options['from']), start_stars=True):
-        for j, filename in enumerate(copy_options['files']):
-            with job_utils.log_step("file '{}' ({}/{})".format(
-                    filename, j+1, len(copy_options['files']))):
-                if ('real_copy' not in copy_options or
-                        not copy_options['real_copy']):
-                    copy_func = fs_utils.symlink
-                else:
-                    copy_func = fs_utils.cp_r
-
-                src_paths = experiment_paths(local_dirs, job_name,
-                                             copy_options['from'])
-                copy_func(
-                    os.path.join(src_paths['output_dir'], filename),
-                    os.path.join(paths['output_dir'], filename)
-                )
-
-
-def run_experiment_steps(steps, exp_options):
-    log = logging.getLogger('kameris')
-
-    for i, step_options in enumerate(steps):
-        step_desc = "step '{}' ({}/{})".format(step_options['type'], i+1,
-                                               len(steps))
-
-        if 'copy' in exp_options and (i in exp_options['copy']['skip'] or
-                                      step_options['type'] in
-                                      exp_options['copy']['skip']):
-            log.info("*** skipping %s because of 'copy' directive", step_desc)
-            continue
-
-        with job_utils.log_step(step_desc, start_stars=True):
-            step_runners[step_options['type']](step_options, exp_options)
+def make_aws_args(settings):
+    return {
+        'aws_access_key_id': settings['aws_key'],
+        'aws_secret_access_key': settings['aws_secret'],
+        'region_name': settings['region']
+    }
 
 
 def setup_logging(job_name, settings):
@@ -191,6 +135,11 @@ def setup_logging(job_name, settings):
 
     if 'remote_logging' in settings:
         remote_log_settings = settings['remote_logging']
+        if remote_log_settings['destination'] != 'cloudwatch':
+            log.warning('*** unknown log destination %s, skipping',
+                        remote_log_settings['destination'])
+        return log, formatter
+
         aws_session = boto3.session.Session(
             **make_aws_args(remote_log_settings)
         )
@@ -209,22 +158,61 @@ def setup_logging(job_name, settings):
     return log, formatter
 
 
+def validate_schema(data, schema_name):
+    with open(os.path.normpath(os.path.join(
+                  os.path.dirname(__file__), '..', 'schemas',
+                  schema_name + '.json'
+              ))) as schema:
+        try:
+            jsonschema.validate(data, json.load(schema))
+        except Exception as e:
+            e.message = ('error while validating {}: {}'
+                         .format(schema_name, e.message))
+
+
+def validate_job_options(options):
+    validate_schema(options, 'job_options')
+
+
+def load_metadata(metadata_dir, name):
+    with open(os.path.join(metadata_dir, name + '.json'), 'r') as f:
+        metadata = json.load(f)
+    return metadata
+
+
+def run_experiment_steps(steps, exp_options):
+    for i, step_options in enumerate(steps):
+        step_desc = "step '{}' ({}/{})".format(step_options['type'], i+1,
+                                               len(steps))
+        with job_utils.log_step(step_desc, start_stars=True):
+            step_runners[step_options['type']](step_options, exp_options)
+
+
 def run(args):
     job_options = YAML(typ='safe').load(args.job_file)
+    validate_job_options(job_options)
 
-    settings = {}
-    for settings_file in args.settings_files:
-        settings.update(YAML(typ='safe').load(settings_file))
+    settings = YAML(typ='safe').load(args.settings_file)
+    validate_schema(settings, 'settings')
 
     local_dirs = settings['local_dirs']
     job_name = job_options['name']
 
     experiments = job_options['experiments']
     if isinstance(experiments, six.string_types):
+        paths = experiment_paths(local_dirs, job_name, '')
         experiments = job_utils.call_string_extended_lambda(
-            experiments.format(**experiment_paths(local_dirs, job_name, ''))
+            experiments, load_metadata=functools.partial(load_metadata,
+                                                         paths['metadata_dir'])
         )
-    experiments = preprocess_experiments(experiments)
+    first_select = next(step for step in job_options['steps'] if
+                        step['type'] == 'select')
+    experiments = preprocess_experiments(experiments,
+                                         first_select.get('copy_for_options'))
+
+    if args.validate_only:
+        print('INFO     options files validated successfully')
+        return
 
     log, formatter = setup_logging(job_name, settings)
 
@@ -239,8 +227,17 @@ def run(args):
             paths = experiment_paths(local_dirs, job_name, exp_name)
             steps = preprocess_steps(job_options['steps'], paths, exp_options)
             if isinstance(exp_options['groups'], six.string_types):
+                metadata = None
+                if 'dataset' in exp_options and ('metadata' in
+                                                 exp_options['dataset']):
+                    metadata_name = exp_options['dataset']['metadata']
+                    metadata = load_metadata(paths['metadata_dir'],
+                                             metadata_name)
                 exp_options['groups'] = job_utils.call_string_extended_lambda(
-                    exp_options['groups'].format(**dict(exp_options, **paths))
+                    exp_options['groups'], dict(exp_options, **paths),
+                    metadata,
+                    load_metadata=functools.partial(load_metadata,
+                                                    paths['metadata_dir'])
                 )
             fs_utils.mkdir_p(paths['output_dir'])
 
@@ -267,11 +264,6 @@ def run(args):
                     },
                     'steps': job_options['steps']
                 }, rerun_file)
-
-            # copy files if requested
-            if 'copy' in exp_options:
-                run_experiment_copy(exp_options['copy'], paths, local_dirs,
-                                    job_name)
 
             # run steps
             run_experiment_steps(steps, exp_options)

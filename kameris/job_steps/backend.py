@@ -4,7 +4,7 @@ import os
 import platform
 import x86cpu
 
-from . import command
+from . import _command
 from ..utils.platform_utils import platform_name
 
 
@@ -30,7 +30,7 @@ def binary_path(bin_name):
 
 
 def run_backend_kmers(options, exp_options):
-    command.run_command_step({
+    _command.run_command_step({
         'command': '"{}" cgr "{}" "{}" {} {}'.format(
                         binary_path('generation_cgr'),
                         options['fasta_output_dir'], options['output_file'],
@@ -39,7 +39,7 @@ def run_backend_kmers(options, exp_options):
 
 
 def run_backend_dists(options, exp_options):
-    command.run_command_step({
+    _command.run_command_step({
         'command': '"{}" "{}" "{}" {}'.format(
                         binary_path('generation_dists'),
                         options['input_file'], options['output_prefix'],

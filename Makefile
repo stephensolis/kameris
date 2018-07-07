@@ -31,10 +31,10 @@ distribute-pip: pip-package
 	python -m twine upload dist/*.whl
 
 distribute-bin: bin-package
-	tools/github-release/github-release$(EXE_SUFFIX) upload --user stephensolis --repo kameris \
-															--tag v$(VERSION_NUMBER) \
-															--name kameris$(EXE_SUFFIX) \
-															--file dist/kameris$(EXE_SUFFIX)
+	external/github-release/github-release$(EXE_SUFFIX) upload --user stephensolis --repo kameris \
+															   --tag v$(VERSION_NUMBER) \
+															   --name kameris$(EXE_SUFFIX) \
+															   --file dist/kameris$(EXE_SUFFIX)
 
 
 test: lint

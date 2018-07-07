@@ -179,21 +179,20 @@ def run_classify_step(options, exp_options):
     else:
         classifier_names = options['classifiers']
 
-    if options['features_type'] == 'mm-dists':
+    features_filename = options['features_file']
+    if features_filename.endswith('.mm-dist'):
         features = kameris_formats.dist_reader \
                                   .read_matrix(options['features_file'])
         features_mode = 'dists'
-    elif options['features_type'] == 'mm-repr':
+    elif features_filename.endswith('.mm-repr'):
         features = []
         reader = kameris_formats.repr_reader(options['features_file'])
         for i in range(reader.count):
             features.append(reader.read_matrix(i, flatten=True))
 
         features_mode = 'features'
-    elif options['features_type'] == 'json-features':
-        with open(options['features_file'], 'r') as infile:
-            features = json.load(infile)
-        features_mode = 'features'
+    else:
+        raise Exception("Unknown type for file '{}'".format(features_filename))
 
     with open(options['metadata_file'], 'r') as infile:
         metadata = json.load(infile)
