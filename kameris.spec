@@ -1,18 +1,18 @@
-from modmap_toolkit.utils.platform_utils import platform_name
+from kameris.utils.platform_utils import platform_name
 
 
-a = Analysis(['modmap-toolkit.py'],
+a = Analysis(['kameris.py'],
              pathex=[os.getcwd()],
              binaries=[],
              datas=[
-                ('modmap_toolkit/scripts/make_plots.wls', 'modmap_toolkit/scripts'),
-                ('modmap_toolkit/scripts/generation_cgr_' + platform_name() + '_*', 'modmap_toolkit/scripts'),
-                ('modmap_toolkit/scripts/generation_dists_' + platform_name() + '_*', 'modmap_toolkit/scripts')
+                ('kameris/scripts/make_plots.wls', 'kameris/scripts'),
+                ('kameris/scripts/generation_cgr_' + platform_name() + '_*', 'kameris/scripts'),
+                ('kameris/scripts/generation_dists_' + platform_name() + '_*', 'kameris/scripts')
              ],
              hiddenimports=[
                  'sklearn.neighbors.typedefs', 'sklearn.neighbors.quad_tree', 'sklearn.tree._utils',
                  'scipy._lib.messagestream',
-                 'modmap_toolkit.subcommands.run_job', 'modmap_toolkit.subcommands.summarize'
+                 'kameris.subcommands.run_job', 'kameris.subcommands.summarize'
              ],
              hookspath=[],
              runtime_hooks=[],
@@ -25,7 +25,7 @@ exe = EXE(pyz,
           a.binaries,
           a.zipfiles,
           a.datas,
-          name='modmap-toolkit-' + platform_name(),
+          name='kameris-' + platform_name(),
           debug=False,
           strip=False,
           upx=False,

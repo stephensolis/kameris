@@ -21,7 +21,7 @@ def call_string_extended_lambda(func_str, *args, **kwargs):  # NOQA (cache line 
 
 # for formatted log output
 
-class LoggerFileAdapter:
+class LoggerAsFile:
     def __init__(self, logger_name):
         self.log = logging.getLogger(logger_name)
 
@@ -36,7 +36,7 @@ class LoggerFileAdapter:
 
 @contextlib.contextmanager
 def log_step(step_text, start_stars=False):
-    log = logging.getLogger('modmap')
+    log = logging.getLogger('kameris')
     if start_stars:
         step_format = '*** %s %s'
     else:

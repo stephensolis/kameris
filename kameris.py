@@ -5,5 +5,5 @@
 import multiprocessing
 multiprocessing.freeze_support()
 
-from modmap_toolkit.__main__ import main  # NOQA
+from kameris.__main__ import main  # NOQA
 main()

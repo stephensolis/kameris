@@ -61,7 +61,7 @@ def run_select_step(options, exp_options):
         file_counter = 1
 
         for metadata_entry in tqdm(pick_group_metadata, mininterval=1,
-                                   file=job_utils.LoggerFileAdapter('modmap')):
+                                   file=job_utils.LoggerAsFile('kameris')):
             group_options = groups[metadata_entry['group']]
 
             # open archive file

@@ -28,7 +28,7 @@ def main():
 
     args = parser.parse_args()
     run_module = importlib.import_module('.subcommands.' + args.module_name,
-                                         'modmap_toolkit')
+                                         'kameris')
     run_module.run(args)
 
 

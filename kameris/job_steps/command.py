@@ -5,7 +5,7 @@ import subprocess
 
 
 def run_command_logged(command, **kwargs):
-    log = logging.getLogger('modmap')
+    log = logging.getLogger('kameris')
     log.info('running command "%s"', command)
     process = subprocess.Popen(command, stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT,

@@ -13,7 +13,7 @@ local_dirs:
 #remote_logging:
 #  # only AWS CloudWatch is currently supported
 #  destination: cloudwatch
-#  log_group: modmap # the CloudWatch group (must already exist)
+#  log_group: kameris # the CloudWatch group (must already exist)
 #  region: us-east-1 # the AWS region
 #  aws_key: # your AWS Access Key ID
 #  aws_secret: # your AWS Secret Access Key

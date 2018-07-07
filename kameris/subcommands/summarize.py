@@ -199,9 +199,9 @@ def run(args):
 
         if args.plot_output_dir is not None:
             num_classes = len(curr_stats['classes'])
-            if num_classes > 9:
+            if num_classes > 10:
                 print('Warning: skipping plot generation because there are '
-                      'too many classes ({} > 9)'.format(num_classes))
+                      'too many classes ({} > 10)'.format(num_classes))
             else:
                 base_output_path = os.path.join(
                     args.plot_output_dir, os.path.basename(args.job_dir)

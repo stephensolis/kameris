@@ -29,7 +29,7 @@ def binary_path(bin_name):
     ))
 
 
-def run_mmg_kmers(options, exp_options):
+def run_backend_kmers(options, exp_options):
     command.run_command_step({
         'command': '"{}" cgr "{}" "{}" {} {}'.format(
                         binary_path('generation_cgr'),
@@ -38,7 +38,7 @@ def run_mmg_kmers(options, exp_options):
     }, {})
 
 
-def run_mmg_dists(options, exp_options):
+def run_backend_dists(options, exp_options):
     command.run_command_step({
         'command': '"{}" "{}" "{}" {}'.format(
                         binary_path('generation_dists'),

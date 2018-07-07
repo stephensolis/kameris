@@ -7,7 +7,7 @@ import sklearn.metrics
 from collections import defaultdict
 import json
 import logging
-import mmg_formats
+import kameris_formats
 import numpy as np
 import scipy.sparse as sparse
 from six import iteritems
@@ -172,20 +172,20 @@ class NumpyJSONEncoder(json.JSONEncoder):
 
 
 def run_classify_step(options, exp_options):
-    log = logging.getLogger('modmap.classify')
+    log = logging.getLogger('kameris.classify')
 
     if options['classifiers'] == 'all':
         classifier_names = classifiers_by_name.keys()
     else:
         classifier_names = options['classifiers']
 
-    if options['features_type'] == 'mmg-dists':
-        features = mmg_formats.dist_reader \
-                              .read_matrix(options['features_file'])
+    if options['features_type'] == 'mm-dists':
+        features = kameris_formats.dist_reader \
+                                  .read_matrix(options['features_file'])
         features_mode = 'dists'
-    elif options['features_type'] == 'mmg-repr':
+    elif options['features_type'] == 'mm-repr':
         features = []
-        reader = mmg_formats.repr_reader(options['features_file'])
+        reader = kameris_formats.repr_reader(options['features_file'])
         for i in range(reader.count):
             features.append(reader.read_matrix(i, flatten=True))
 

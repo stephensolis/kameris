@@ -26,7 +26,7 @@ jobs:
       language: generic
       if: branch = master AND type != pull_request
       install:
-        - brew upgrade python
+        - brew update && brew uninstall --ignore-dependencies --force python && brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/f2a764ef944b1080be64bd88dca9a1d80130c558/Formula/python.rb
         - unlink /usr/local/bin/python; ln -s /usr/local/bin/python3 /usr/local/bin/python
         - export PATH=/usr/local/bin:$PATH
         - sudo mkdir -p /usr/local/man

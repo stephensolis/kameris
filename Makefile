@@ -1,7 +1,6 @@
 .PHONY: all pip-package bin-package distribute distribute-pip distribute-bin test lint install uninstall clean
 
-CLEAN_CMD = bash -c 'rm -rf build dist modmap_toolkit.egg-info && find . -type f \( -name '*.pyc' -o -name '*.pyo' \) -delete'
-VERSION_NUMBER = $(shell python -c 'import modmap_toolkit; print(modmap_toolkit.__version__)')
+VERSION_NUMBER = $(shell python -c 'import kameris; print(kameris.__version__)')
 ifeq ($(OS),Windows_NT)
 	EXE_SUFFIX = -windows.exe
 else
@@ -23,7 +22,7 @@ pip-package: clean
 
 bin-package:
 	python -m pip install --upgrade pyinstaller
-	python -m PyInstaller modmap-toolkit.spec
+	python -m PyInstaller kameris.spec
 
 distribute: distribute-pip distribute-bin
 
@@ -32,24 +31,24 @@ distribute-pip: pip-package
 	python -m twine upload dist/*.whl
 
 distribute-bin: bin-package
-	tools/github-release/github-release$(EXE_SUFFIX) upload --user stephensolis --repo modmap-toolkit \
+	tools/github-release/github-release$(EXE_SUFFIX) upload --user stephensolis --repo kameris \
 															--tag v$(VERSION_NUMBER) \
-															--name modmap-toolkit$(EXE_SUFFIX) \
-															--file dist/modmap-toolkit$(EXE_SUFFIX)
+															--name kameris$(EXE_SUFFIX) \
+															--file dist/kameris$(EXE_SUFFIX)
 
 
 test: lint
 
 lint:
-	python -m flake8 modmap_toolkit modmap-toolkit.py setup.py
+	python -m flake8 kameris kameris.py setup.py
 
 
 install:
 	python -m pip install -e .
 
 uninstall:
-	python -m pip uninstall modmap-toolkit
+	python -m pip uninstall kameris
 
 
 clean:
-	$(CLEAN_CMD)
+	bash -c 'rm -rf build dist kameris.egg-info && find . -type f \( -name '*.pyc' -o -name '*.pyo' \) -delete'

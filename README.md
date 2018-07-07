@@ -1,42 +1,42 @@
 <h1 align="center">
     <br>
-    <img src="https://raw.githubusercontent.com/stephensolis/modmap-toolkit/master/logo/logo.png" alt="modmap-toolkit" width="200">
+    <img src="https://raw.githubusercontent.com/stephensolis/kameris/master/logo/logo.png" alt="kameris" width="200">
     <br>
-    modmap-toolkit
+    Kameris
     <br>
 </h1>
 
 <h4 align="center">A fast, user-friendly analysis and evaluation pipeline for some DNA sequence classification tasks.</h4>
 
 <p align="center">
-    <a href="https://pypi.python.org/pypi/modmap-toolkit">
-        <img src="https://badge.fury.io/py/modmap-toolkit.svg" alt="PyPI">
+    <a href="https://pypi.python.org/pypi/kameris">
+        <img src="https://badge.fury.io/py/kameris.svg" alt="PyPI">
     </a>
     <img src="http://img.shields.io/:license-mit-blue.svg" alt="License">
     &nbsp;
-    <a href="https://travis-ci.org/stephensolis/modmap-toolkit">
-        <img src="https://travis-ci.org/stephensolis/modmap-toolkit.svg?branch=master" alt="Travis">
+    <a href="https://travis-ci.org/stephensolis/kameris">
+        <img src="https://travis-ci.org/stephensolis/kameris.svg?branch=master" alt="Travis">
     </a>
-    <a href="https://ci.appveyor.com/project/stephensolis/modmap-toolkit">
+    <a href="https://ci.appveyor.com/project/stephensolis/kameris">
         <img src="https://ci.appveyor.com/api/projects/status/v22hru9wvvdhsv8q?svg=true" alt="Appveyor">
     </a>
     &nbsp;
-    <a href="https://www.codacy.com/app/stephensolis/modmap-toolkit">
+    <a href="https://www.codacy.com/app/stephensolis/kameris">
         <img src="https://api.codacy.com/project/badge/Grade/2286db6fde1d4b729127f820d7896cd0" alt="Codacy">
     </a>
-    <a href="https://codebeat.co/projects/github-com-stephensolis-modmap-toolkit-maste">
-        <img src="https://codebeat.co/badges/d344663e-21af-402e-a95f-b030b6a6ca2d" alt="Codebeat">
+    <a href="https://codebeat.co/projects/github-com-stephensolis-kameris-master">
+        <img src="https://codebeat.co/badges/5826ce1f-ba26-4cd4-a641-d33845023d79" alt="Codebeat">
     </a>
-    <a href="https://codeclimate.com/github/stephensolis/modmap-toolkit/maintainability">
-        <img src="https://api.codeclimate.com/v1/badges/7dcf996e9fcb35d8db7d/maintainability" alt="Codeclimate">
+    <a href="https://codeclimate.com/github/stephensolis/kameris/maintainability">
+        <img src="https://api.codeclimate.com/v1/badges/0ea51d670aba5f65c707/maintainability" alt="Codeclimate">
     </a>
 </p>
 
 This project uses:
 
-- [stephensolis/modmap-generator-cpp](https://github.com/stephensolis/modmap-generator-cpp) to generate kmer count vectors and distance matrices
+- [stephensolis/kameris-backend](https://github.com/stephensolis/kameris-backend) to generate k-mer count vectors and distance matrices
 - [scikit-learn](http://scikit-learn.org/) for supervised classifiers
-- [Wolfram Mathematica](https://www.wolfram.com/mathematica/) and code based on [stephensolis/modmap-generator-mma](https://github.com/stephensolis/modmap-generator-mma) to generate interactive plots
+- [Wolfram Mathematica](https://www.wolfram.com/mathematica/) and code based on [stephensolis/modmap-generator](https://github.com/stephensolis/modmap-generator) to generate interactive plots
 - [NumPy](http://www.numpy.org/) and [SciPy](https://www.scipy.org/) for MultiDimensional Scaling (MDS)
 
 ## License ![License](http://img.shields.io/:license-mit-blue.svg)

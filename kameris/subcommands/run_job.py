@@ -164,7 +164,7 @@ def run_experiment_copy(copy_options, paths, local_dirs, job_name):
 
 
 def run_experiment_steps(steps, exp_options):
-    log = logging.getLogger('modmap')
+    log = logging.getLogger('kameris')
 
     for i, step_options in enumerate(steps):
         step_desc = "step '{}' ({}/{})".format(step_options['type'], i+1,
@@ -181,7 +181,7 @@ def run_experiment_steps(steps, exp_options):
 
 
 def setup_logging(job_name, settings):
-    log = logging.getLogger('modmap')
+    log = logging.getLogger('kameris')
     log.setLevel(logging.INFO)
     formatter = logging.Formatter('%(levelname)-8s %(message)s')
 

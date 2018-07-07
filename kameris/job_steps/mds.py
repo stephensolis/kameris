@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, unicode_literals
 
 import json
 import logging
-import mmg_formats
+import kameris_formats
 import numpy as np
 import scipy.sparse.linalg as linalg
 
@@ -26,7 +26,7 @@ def mds(delta, dim):
 
     (eigenvals, eigenvecs) = linalg.eigsh(bMatr, k=dim)
     if (eigenvals < 0).any():
-        logging.getLogger('modmap.mds') \
+        logging.getLogger('kameris.mds') \
                .warning('some eigenvalues were negative')
 
     # not sure why eigensystem is sorted in reverse order for eigsh...
@@ -36,7 +36,7 @@ def mds(delta, dim):
 
 
 def run_mds_step(options, exp_options):
-    dists = mmg_formats.dist_reader.read_matrix(options['dists_file'])
+    dists = kameris_formats.dist_reader.read_matrix(options['dists_file'])
     points = mds(dists, options['dimensions']).tolist()
 
     with open(options['output_file'], 'w') as outfile:
