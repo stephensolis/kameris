@@ -125,6 +125,7 @@
                                 "type": "integer",
                                 "minimum": 1
                             },
+                            "validation_split_by": {"type": "string"},
                             "dim_reduce_fraction": {
                                 "type": "number",
                                 "minimum": 0,

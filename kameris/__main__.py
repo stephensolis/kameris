@@ -32,8 +32,6 @@ def main():
         subparser.set_defaults(module_name=cmd_settings['module_name'])
 
     import importlib
-    import logging
-    import sys
 
     try:
         args = parser.parse_args()
@@ -42,15 +40,25 @@ def main():
         )
         run_module.run(args)
     except Exception as e:
+        import logging
+        import sys
+        import traceback
+
         log = logging.getLogger('kameris')
         message = 'an unexpected error occurred: {}: {}'.format(
             type(e).__name__,
             (e.message if hasattr(e, 'message') else '') or str(e)
         )
+        report_message = (
+            'if you believe this is a bug, please report it at '
+            'https://github.com/stephensolis/kameris/issues and include ALL '
+            'the following text:\n') + ''.join(traceback.format_exc())
         if log.handlers:
             log.error(message)
+            log.error(report_message)
         else:
             print('ERROR    ' + message)
+            print('ERROR    ' + report_message)
         sys.exit(1)
 
 

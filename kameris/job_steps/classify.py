@@ -124,8 +124,19 @@ def crossvalidation_run(classifier_factory, features, features_mode,
     # perform validation group splitting
     validation_count = options['validation_count']
     num_points = len(point_classes)
-    validation_indexes = np.array_split(np.random.permutation(num_points),
-                                        validation_count)
+    if 'validation_split_classes' in options:
+        val_all_classes = options['validation_split_classes']
+        val_split_classes = np.array_split(
+            np.random.permutation(np.unique(val_all_classes)), validation_count
+        )
+        validation_indexes = [
+            np.concatenate([np.where(val_all_classes == split_class)[0]
+                            for split_class in split_classes])
+            for split_classes in val_split_classes
+        ]
+    else:
+        validation_indexes = np.array_split(np.random.permutation(num_points),
+                                            validation_count)
 
     # setup storage for accuracy/stats
     totals = defaultdict(int)
@@ -222,7 +233,11 @@ def run_classify_step(options, exp_options):
     with open(options['metadata_file'], 'r') as infile:
         metadata = json.load(infile)
     point_classes = np.array([x['group'] for x in metadata])
-    unique_classes = sorted(set(x['group'] for x in metadata))
+    unique_classes = np.unique(point_classes)
+    if 'validation_split_by' in options:
+        options['validation_split_classes'] = np.array([
+            x[options['validation_split_by']] for x in metadata
+        ])
 
     # run classifiers and obtain results
     results = {}
