@@ -19,6 +19,7 @@ a = Analysis(['kameris.py'],
              excludes=[],
              win_no_prefer_redirects=False,
              win_private_assemblies=False)
+
 pyz = PYZ(a.pure, a.zipped_data)
 exe = EXE(pyz,
           a.scripts,

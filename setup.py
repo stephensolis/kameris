@@ -1,7 +1,9 @@
+import os
+import platform
 from setuptools import setup, find_packages
+
 from kameris import __version__
 from kameris.utils.platform_utils import platform_name
-import platform
 
 
 try:
@@ -23,12 +25,19 @@ try:
 except ImportError:
     bdist_wheel = None
 
+with open(os.path.join(os.path.dirname(__file__), 'README.md')) as readme:
+    long_description = readme.read()
+
 
 setup(
     name='kameris',
     version=__version__,
     description=('A fast, user-friendly analysis and evaluation pipeline '
                  'for some DNA sequence classification tasks.'),
+    long_description=long_description,
+    long_description_content_type='text/markdown',
+    url='https://github.com/stephensolis/kameris/',
+
     classifiers=[
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: MIT License',
@@ -41,9 +50,9 @@ setup(
         'Topic :: Scientific/Engineering :: Artificial Intelligence',
         'Topic :: Scientific/Engineering :: Bio-Informatics'
     ],
+
     author='Stephen',
     author_email='stephsolis@gmail.com',
-    url='https://github.com/stephensolis/kameris/',
     license='MIT',
     packages=find_packages(),
     package_data={
