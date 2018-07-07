@@ -1,4 +1,4 @@
-.PHONY: all pip-package bin-package distribute distribute-pip distribute-bin test lint install uninstall clean
+.PHONY: all pip-package bin-package distribute distribute-pip distribute-bin test pytest lint install uninstall clean
 
 VERSION_NUMBER = $(shell python -c 'import kameris; print(kameris.__version__)')
 ifeq ($(OS),Windows_NT)
@@ -39,10 +39,18 @@ distribute-bin: bin-package
 															   --file dist/kameris$(EXE_SUFFIX)
 
 
-test: lint
+test: pytest lint
+
+pytest:
+	python -m pytest -s -v --cov=./
+ifdef SEND_COVERAGE
+	pip install codecov python-coveralls
+	python -m codecov
+	python -m coveralls
+endif
 
 lint:
-	python -m flake8 kameris kameris.py setup.py
+	python -m flake8 .
 
 
 install:

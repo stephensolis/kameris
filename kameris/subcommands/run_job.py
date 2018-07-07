@@ -87,7 +87,7 @@ def preprocess_experiments(experiments, select_copy_for_options):
     return final_experiments
 
 
-def preprocess_steps(steps, paths, exp_options):
+def preprocess_steps(steps, paths, exp_options, disable_avx):
     def make_output_paths(options, keys):
         for key in keys:
             if key in options and not os.path.isabs(options[key]):
@@ -99,10 +99,12 @@ def preprocess_steps(steps, paths, exp_options):
             step_options.update(paths)
         elif step_options['type'] == 'kmers':
             step_options['fasta_output_dir'] = paths['fasta_output_dir']
+            step_options['disable_avx'] = disable_avx
             if step_options['k'] == 'from_options':
                 step_options['k'] = exp_options['k']
             make_output_paths(step_options, ['output_file'])
         elif step_options['type'] == 'distances':
+            step_options['disable_avx'] = disable_avx
             make_output_paths(step_options, ['input_file', 'output_prefix'])
         elif step_options['type'] == 'mds':
             make_output_paths(step_options, ['dists_file', 'output_file'])
@@ -225,7 +227,8 @@ def run(args):
             # get ready
             paths = experiment_paths(local_dirs, job_name, exp_name,
                                      args.urls_file)
-            steps = preprocess_steps(job_options['steps'], paths, exp_options)
+            steps = preprocess_steps(job_options['steps'], paths, exp_options,
+                                     args.disable_avx)
             if isinstance(exp_options['groups'], six.string_types):
                 metadata = None
                 if 'dataset' in exp_options and ('metadata' in
