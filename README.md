@@ -32,6 +32,76 @@
     </a>
 </p>
 
+## Installing
+
+There are three ways to install this software. Choose whichever one is best for your needs:
+
+**1. If you already have Python 2.7 or 3.4+ installed (recommended):**
+
+Run `pip install kameris`.
+
+**2. If you do not have Python installed or are unable to install software:**
+
+[Click here](https://github.com/stephensolis/kameris/releases/latest) and download the version corresponding to your operating system.
+If you use Linux or macOS, you may need to run `chmod +x "path to downloaded program"`.
+
+**3. If you are a developer or want to build your own version of Kameris:**
+
+Clone this repository then run `make install`.
+
+## Quick demo
+
+This software is able to train sequence classification models and use them to make predictions.
+
+Before following these instructions, make sure you've installed the software.
+If you followed option **1** above and the command `kameris` doesn't work for you, try using `python -m kameris` instead.
+If you followed option **2** above and downloaded an executable, replace `kameris` in the instructions below with the name of the executable you downloaded.
+
+### Classifying sequences with an existing model
+
+First, let's classify some HIV-1 sequences.
+
+1. Start by downloading this zip file containing HIV-1 genomes, and extract it to a folder: https://raw.githubusercontent.com/stephensolis/kameris/master/demo/hiv1-genomes.zip.
+2. Run `kameris classify hiv1-mlp "path to extracted files"`
+
+This will output the top subtype match for each sequence and write all results to a new file `results.json`.
+
+The `hiv1-mlp` model is able to give class probabilities and a ranked list of predictions, but some models are only able to report the top match. For example, try `kameris classify hiv1-linearsvm "path to extracted files"`
+
+To see other available models, go to https://github.com/stephensolis/kameris-experiments/tree/master/models.
+
+### Training a new model
+
+Now, let's train our own HIV-1 sequence classification models.
+
+1. Create an empty folder and open a terminal in the folder.
+2. Create folders `data` and `output`.
+3. Run `kameris run-job https://raw.githubusercontent.com/stephensolis/kameris/master/demo/hiv1-lanl.yml https://raw.githubusercontent.com/stephensolis/kameris/master/demo/settings.yml`
+
+Depending on your computer's performance and internet speed, it may take 5-10 minutes to run.
+This will automatically download the required datasets and train a simpler version of the [hiv1/lanl-whole experiment from kameris-experiments](https://github.com/stephensolis/kameris-experiments).
+This was the exact job used to train the models from the previous section, and these are the same models used in the paper ["An open-source k-mer based machine learning tool for fast and accurate subtyping of HIV-1 genomes"](https://www.biorxiv.org/content/early/2018/07/05/362780).
+
+Now, open `output/hiv1-lanl-whole`. You will notice folders were created for each value of `k`. Within each folder are several files:
+- `fasta` contains the FASTA files extracted from the downloaded dataset used for model training and evaluation.
+- `metadata.json` contains metadata on the FASTA files used to determine the class for each sequence.
+- `cgrs.mm-repr` contains feature vectors for each sequence. See the mentioned paper for more technical details.
+- `classification-kmers.json` contains evaluation results after using cross-validation on the dataset. See the mentioned paper for more technical details.
+- The `.mm-model` files contain trained models which may be passed to `kameris classify` in order to classify new sequences. **Note** that models trained using Python 2 will not run under Python 3 and vice-versa.
+- `log.txt` is a log file containing all the output printed during job execution.
+- `rerun-experiment.yml` is a file which may be passed to `kameris run-job` in order to re-run the job and obtain exactly the files found in this directory.
+
+Kameris also includes functionality to summarize results in easy-to-read tables. Try it by running `kameris summarize output/hiv1-lanl-whole`.
+
+You can change the settings used to train the model: first download the files [hiv1-lanl.yml](https://raw.githubusercontent.com/stephensolis/kameris/master/demo/hiv1-lanl.yml) and [settings.yml](https://raw.githubusercontent.com/stephensolis/kameris/master/demo/settings.yml).
+Training settings are found in `hiv1-lanl.yml` -- try changing the value of `k` or uncommenting different classifier types.
+File storage and logging settings are found in `settings.yml`.
+After making changes, run `kameris run-job hiv1-lanl.yml settings.yml` to train your model.
+
+[//]: # (## Documentation)
+
+## Dependencies
+
 This project uses:
 
 - [stephensolis/kameris-backend](https://github.com/stephensolis/kameris-backend) to generate k-mer count vectors and distance matrices

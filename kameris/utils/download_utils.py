@@ -8,6 +8,7 @@ import os
 import requests
 from ruamel.yaml import YAML
 from six.moves import urllib
+import sys
 from tqdm import tqdm
 
 from . import defaults, fs_utils, job_utils
@@ -53,7 +54,11 @@ def url_for_file(path, urls_file, filetype):  # NOQA (cache line above)
         ))
 
     filename = os.path.splitext(os.path.basename(path))[0]
-    return urls[filetype][filename]
+    if filetype == 'models':
+        python_ver = 'python{}'.format(sys.version_info.major)
+        return urls[filetype][filename][python_ver]
+    else:
+        return urls[filetype][filename]
 
 
 def open_url_cached(url, mode, force_download=False):
@@ -63,7 +68,7 @@ def open_url_cached(url, mode, force_download=False):
                              'cache')
     fs_utils.mkdir_p(cache_dir)
 
-    cache_key = hashlib.md5(url).hexdigest()
+    cache_key = hashlib.md5(url.encode('utf-8')).hexdigest()
     cache_filename = os.path.join(cache_dir, cache_key)
     if not force_download and os.path.exists(cache_filename):
         log.info("file '%s' already downloaded, using cached version", url)
