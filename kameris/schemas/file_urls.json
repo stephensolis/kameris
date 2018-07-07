@@ -1,0 +1,20 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+        "metadata": {"$ref": "#/definitions/url_list"},
+        "archives": {"$ref": "#/definitions/url_list"},
+        "models": {"$ref": "#/definitions/url_list"}
+    },
+    "additionalProperties": false,
+
+    "definitions": {
+        "url_list": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "string",
+                "pattern": "http(s)?://.*"
+            }
+        }
+    }
+}

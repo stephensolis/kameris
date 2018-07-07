@@ -19,11 +19,17 @@ def argparse_check_dir(path):
         return path
 
 
+def argparse_check_path(path):
+    if not os.path.exists(path):
+        raise argparse.ArgumentTypeError(path + ' is not a valid path')
+    else:
+        return path
+
+
 def run_job_setup_args(parser):
-    parser.add_argument('job_file', type=argparse.FileType('r'),
-                        help='job description YAML file')
-    parser.add_argument('settings_file', type=argparse.FileType('r'),
-                        help='program settings YAML file')
+    parser.add_argument('job_file', help='job description YAML file')
+    parser.add_argument('settings_file', help='program settings YAML file')
+    parser.add_argument('urls_file', nargs='?', help='download URLs YAML file')
     parser.add_argument('--validate-only', action='store_true',
                         help='just validate the settings and job description '
                              "files, but don't run the job")
@@ -41,6 +47,16 @@ def summarize_setup_args(parser):
                              'correct prediction (defaults to top-1)')
 
 
+def classify_setup_args(parser):
+    parser.add_argument('model', help='name, URL, or path to model file')
+    parser.add_argument('files', type=argparse_check_path,
+                        help='file or folder of FASTA files to classify')
+    parser.add_argument('urls_file', nargs='?', help='download URLs YAML file')
+    parser.add_argument('--force-download', action='store_true',
+                        help='if the model file has already been downloaded '
+                             'and is in the cache, download it again anyway')
+
+
 subcommands = {
     'run-job': {
         'module_name': 'run_job',
@@ -53,9 +69,9 @@ subcommands = {
         'description': 'Prints summary information from a classification job '
                        'run.'
     },
-    # 'classify': {
-    #     'module_name': 'classify',
-    #     'setup_args': classify_setup_args,
-    #     'description': 'Runs sequences through a trained model.'
-    # }
+    'classify': {
+        'module_name': 'classify',
+        'setup_args': classify_setup_args,
+        'description': 'Runs sequences through a trained model.'
+    }
 }

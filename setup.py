@@ -69,9 +69,11 @@ setup(
         ]
     },
     install_requires=[
+        'appdirs',
         'jsonschema',
         'kameris-formats',
         'numpy',
+        'requests',
         'ruamel.yaml',
         'psutil',
         # it's necessary to freeze scikit-learn since models are neither

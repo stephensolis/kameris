@@ -10,7 +10,7 @@ import zipfile
 # these may be used by pick_group_fn/postprocess_fn
 from six.moves import range  # NOQA
 
-from ..utils import file_formats, fs_utils, job_utils
+from ..utils import download_utils, file_formats, fs_utils, job_utils
 
 
 def run_select_step(options, exp_options):
@@ -53,12 +53,20 @@ def run_select_step(options, exp_options):
             if all_metadata_filename in all_metadata_cache:
                 all_metadata = all_metadata_cache[all_metadata_filename]
             else:
+                if not os.path.exists(all_metadata_filename):
+                    download_utils.download_file(
+                        download_utils.url_for_file(
+                            all_metadata_filename, options['urls_file'],
+                            'metadata'
+                        ),
+                        all_metadata_filename
+                    )
                 with open(all_metadata_filename, 'r') as infile:
                     all_metadata = json.load(infile)
                 all_metadata_cache[all_metadata_filename] = all_metadata
 
             # perform selection
-            group_metadata = job_utils.make_string_extended_lambda(
+            group_metadata = job_utils.parse_multiline_lambda_str(
                 options['pick_group']
             )(all_metadata, group_options, exp_options)
             for metadata_entry in group_metadata:
@@ -85,6 +93,13 @@ def run_select_step(options, exp_options):
             if archive_filename in archive_cache:
                 archive = archive_cache[archive_filename]
             else:
+                if not os.path.exists(archive_filename):
+                    download_utils.download_file(
+                        download_utils.url_for_file(
+                            archive_filename, options['urls_file'], 'archives'
+                        ),
+                        archive_filename
+                    )
                 archive = zipfile.ZipFile(archive_filename)
                 archive_cache[archive_filename] = archive
 
@@ -114,7 +129,7 @@ def run_select_step(options, exp_options):
             # run postprocess if required
             if 'postprocess' in options:
                 new_metadata, sequences_list = zip(
-                    *job_utils.make_string_extended_lambda(
+                    *job_utils.parse_multiline_lambda_str(
                         options['postprocess']
                      )(metadata_entry, file_sequences, exp_options)
                 )

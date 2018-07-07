@@ -1,7 +1,6 @@
 from __future__ import (
     absolute_import, division, print_function, unicode_literals)
 
-import boto3
 import collections
 import copy
 import functools
@@ -15,15 +14,12 @@ from ruamel.yaml import YAML
 import six
 from six import iteritems
 from six.moves import range
-import sys
-import time
-import watchtower
 
 from ..job_steps import step_runners
-from ..utils import fs_utils, job_utils
+from ..utils import download_utils, fs_utils, job_utils
 
 
-def experiment_paths(local_dirs, job_name, exp_name):
+def experiment_paths(local_dirs, job_name, exp_name, urls_file):
     output_dir = os.path.join(local_dirs['output'], job_name, exp_name)
 
     return {
@@ -35,7 +31,8 @@ def experiment_paths(local_dirs, job_name, exp_name):
         'metadata_output_file': os.path.join(output_dir, 'metadata.json'),
         'log_file': os.path.join(output_dir, 'log.txt'),
         'experiment_rerun_file': os.path.join(output_dir,
-                                              'rerun_experiment.yml')
+                                              'rerun_experiment.yml'),
+        'urls_file': urls_file
     }
 
 
@@ -116,48 +113,6 @@ def preprocess_steps(steps, paths, exp_options):
     return steps
 
 
-def make_aws_args(settings):
-    return {
-        'aws_access_key_id': settings['aws_key'],
-        'aws_secret_access_key': settings['aws_secret'],
-        'region_name': settings['region']
-    }
-
-
-def setup_logging(job_name, settings):
-    log = logging.getLogger('kameris')
-    log.setLevel(logging.INFO)
-    formatter = logging.Formatter('%(levelname)-8s %(message)s')
-
-    console_logger = logging.StreamHandler(stream=sys.stdout)
-    console_logger.setFormatter(formatter)
-    log.addHandler(console_logger)
-
-    if 'remote_logging' in settings:
-        remote_log_settings = settings['remote_logging']
-        if remote_log_settings['destination'] != 'cloudwatch':
-            log.warning('*** unknown log destination %s, skipping',
-                        remote_log_settings['destination'])
-        return log, formatter
-
-        aws_session = boto3.session.Session(
-            **make_aws_args(remote_log_settings)
-        )
-        log_stream_name = '{}-{}'.format(job_name, int(time.time()))
-
-        log.info('*** logging to AWS CloudFront stream %s', log_stream_name)
-        aws_logger = watchtower.CloudWatchLogHandler(
-            log_group=remote_log_settings['log_group'],
-            stream_name=log_stream_name,
-            boto3_session=aws_session,
-            send_interval=5
-        )
-        aws_logger.setFormatter(formatter)
-        log.addHandler(aws_logger)
-
-    return log, formatter
-
-
 def validate_schema(data, schema_name):
     with open(os.path.normpath(os.path.join(
                   os.path.dirname(__file__), '..', 'schemas',
@@ -176,11 +131,11 @@ def validate_job_options(options):
 
     # check lambdas under experiments
     if isinstance(options['experiments'], six.string_types):
-        job_utils.make_string_extended_lambda(options['experiments'])
+        job_utils.parse_multiline_lambda_str(options['experiments'])
     else:
         for exp_opts in options['experiments'].values():
             if isinstance(exp_opts['groups'], six.string_types):
-                job_utils.make_string_extended_lambda(exp_opts['groups'])
+                job_utils.parse_multiline_lambda_str(exp_opts['groups'])
 
     # check select step
     select_steps = [s for s in options['steps'] if s['type'] == 'select']
@@ -188,13 +143,19 @@ def validate_job_options(options):
         raise Exception('at most one step of type select is allowed in a job')
     elif select_steps:
         select_step = select_steps[0]
-        job_utils.make_string_extended_lambda(select_step['pick_group'])
+        job_utils.parse_multiline_lambda_str(select_step['pick_group'])
         if 'postprocess' in select_step:
-            job_utils.make_string_extended_lambda(select_step['postprocess'])
+            job_utils.parse_multiline_lambda_str(select_step['postprocess'])
 
 
-def load_metadata(metadata_dir, name):
-    with open(os.path.join(metadata_dir, name + '.json'), 'r') as f:
+def load_metadata(metadata_dir, urls_file, name):
+    file_path = os.path.join(metadata_dir, name + '.json')
+    if not os.path.exists(file_path):
+        download_utils.download_file(
+            download_utils.url_for_file(file_path, urls_file, 'metadata'),
+            file_path
+        )
+    with open(file_path, 'r') as f:
         metadata = json.load(f)
     return metadata
 
@@ -208,13 +169,21 @@ def run_experiment_steps(steps, exp_options):
 
 
 def run(args):
-    job_options = YAML(typ='safe').load(args.job_file)
+    job_options = YAML(typ='safe').load(
+        download_utils.read_file_or_url(args.job_file)
+    )
     validate_job_options(job_options)
 
-    settings = YAML(typ='safe').load(args.settings_file)
+    settings = YAML(typ='safe').load(
+        download_utils.read_file_or_url(args.settings_file)
+    )
     validate_schema(settings, 'settings')
 
     if args.validate_only:
+        if args.urls_file:
+            validate_schema(YAML(typ='safe').load(
+                download_utils.read_file_or_url(args.urls_file)
+            ), 'file_urls')
         print('INFO     options files validated successfully')
         return
 
@@ -224,16 +193,17 @@ def run(args):
     experiments = job_options['experiments']
     if isinstance(experiments, six.string_types):
         paths = experiment_paths(local_dirs, job_name, '')
-        experiments = job_utils.make_string_extended_lambda(
-            experiments, load_metadata=functools.partial(load_metadata,
-                                                         paths['metadata_dir'])
+        experiments = job_utils.parse_multiline_lambda_str(
+            experiments, load_metadata=functools.partial(
+                load_metadata, paths['metadata_dir'], args.urls_file
+            )
         )()
     first_select = next(step for step in job_options['steps'] if
                         step['type'] == 'select')
     experiments = preprocess_experiments(experiments,
                                          first_select.get('copy_for_options'))
 
-    log, formatter = setup_logging(job_name, settings)
+    log, formatter = job_utils.setup_logging(job_name, settings)
 
     for i, (exp_name, exp_options) in enumerate(iteritems(experiments)):
         with job_utils.log_step("experiment '{}' ({}/{})"
@@ -243,7 +213,8 @@ def run(args):
             exp_options['experiment_name'] = exp_name
 
             # get ready
-            paths = experiment_paths(local_dirs, job_name, exp_name)
+            paths = experiment_paths(local_dirs, job_name, exp_name,
+                                     args.urls_file)
             steps = preprocess_steps(job_options['steps'], paths, exp_options)
             if isinstance(exp_options['groups'], six.string_types):
                 metadata = None
@@ -251,11 +222,12 @@ def run(args):
                                                  exp_options['dataset']):
                     metadata_name = exp_options['dataset']['metadata']
                     metadata = load_metadata(paths['metadata_dir'],
-                                             metadata_name)
-                exp_options['groups'] = job_utils.make_string_extended_lambda(
+                                             args.urls_file, metadata_name)
+                exp_options['groups'] = job_utils.parse_multiline_lambda_str(
                     exp_options['groups'],
-                    load_metadata=functools.partial(load_metadata,
-                                                    paths['metadata_dir'])
+                    load_metadata=functools.partial(
+                        load_metadata, paths['metadata_dir'], args.urls_file
+                    )
                 )(dict(exp_options, **paths), metadata)
             fs_utils.mkdir_p(paths['output_dir'])
 
