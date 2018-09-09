@@ -50,9 +50,9 @@ def main():
             (e.message if hasattr(e, 'message') else '') or str(e)
         )
         report_message = (
-            'if you believe this is a bug, please report it at '
+            '***if you believe this is a bug, please report it at '
             'https://github.com/stephensolis/kameris/issues and include ALL '
-            'the following text:\n') + ''.join(traceback.format_exc())
+            'the following text:***\n') + ''.join(traceback.format_exc())
         if log.handlers:
             log.error(message)
             log.error(report_message)

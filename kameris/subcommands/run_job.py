@@ -202,6 +202,10 @@ def run(args):
     local_dirs = settings['local_dirs']
     job_name = job_options['name']
 
+    # create archives/metadata dirs if they don't exist
+    fs_utils.mkdir_p(local_dirs['archives'])
+    fs_utils.mkdir_p(local_dirs['metadata'])
+
     experiments = job_options['experiments']
     if isinstance(experiments, six.string_types):
         paths = experiment_paths(local_dirs, job_name, '')

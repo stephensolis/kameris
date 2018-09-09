@@ -90,8 +90,7 @@ To see other available models, go to https://github.com/stephensolis/kameris-exp
 Now, let's train our own HIV-1 sequence classification models.
 
 1. Create an empty folder and open a terminal in the folder.
-2. Create folders `data` and `output`.
-3. Run `kameris run-job https://raw.githubusercontent.com/stephensolis/kameris/master/demo/hiv1-lanl.yml https://raw.githubusercontent.com/stephensolis/kameris/master/demo/settings.yml`
+2. Run `kameris run-job https://raw.githubusercontent.com/stephensolis/kameris/master/demo/hiv1-lanl.yml https://raw.githubusercontent.com/stephensolis/kameris/master/demo/settings.yml`
 
 Depending on your computer's performance and internet speed, it may take 5-10 minutes to run.
 This will automatically download the required datasets and train a simpler version of the [hiv1/lanl-whole experiment from kameris-experiments](https://github.com/stephensolis/kameris-experiments).

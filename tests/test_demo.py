@@ -44,8 +44,6 @@ def test_classify_existing_model(shared_tempdir):
 def test_train_model(shared_tempdir):
     root_dir = os.getcwd()
     with chdir(shared_tempdir):
-        os.mkdir('data')
-        os.mkdir('output')
         args = dotmap.DotMap({
             'job_file': os.path.join(root_dir, 'tests', 'fixtures',
                                      'hiv1-lanl-small.yml'),
