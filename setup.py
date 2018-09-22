@@ -75,7 +75,7 @@ setup(
         'jsonschema',
         'kameris-formats',
         'numpy',
-        'requests',
+        'requests>=2.18.0',
         'ruamel.yaml',
         'psutil',
         # it's necessary to freeze scikit-learn since models are neither
